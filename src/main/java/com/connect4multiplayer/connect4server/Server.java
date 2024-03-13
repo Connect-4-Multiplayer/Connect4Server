@@ -24,6 +24,11 @@ public class Server {
         serverSock.bind(addr);
     }
 
+    public Optional<Move> validateMove(Move move) {
+        // TODO
+        return Optional.empty();
+    }
+
     public CompletableFuture<Optional<Move>> handleMove() {
 
         CompletableFuture<Optional<Move>> moveFuture = new CompletableFuture<>();
@@ -40,12 +45,19 @@ public class Server {
             }
         });
 
-        return moveFuture;
+        return moveFuture.whenCompleteAsync((move, throwable) -> {
+            if (move.isPresent()) {
+                Move m = move.get();
+                // pass col back to client
+
+
+            }
+        });
     }
 
     public void readMove(AsynchronousSocketChannel client, CompletableFuture<Optional<Move>> moveFuture) {
 
-        ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES * 2);
+        ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES + Byte.BYTES);
         client.read(buffer, null, new CompletionHandler<Integer, Void>() {
             @Override
             public void completed(Integer result, Void unused) {
@@ -54,8 +66,8 @@ public class Server {
                 if (result == -1) {
                     try {
                         client.close();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
+                    } catch (IOException ignored) {
+                        // Do nothing, we don't care if it fails here
                     }
 
                     moveFuture.complete(Optional.empty());
@@ -64,11 +76,14 @@ public class Server {
 
                 // If there are still bytes to read, read them
                 buffer.flip();
-                int col = buffer.getInt();
+                byte col = buffer.get();
                 int gameId = buffer.getInt();
 
+                Move move = new Move(col, gameId);
+
+                Optional<Move> optionalMove = validateMove(move);
                 // Construct our move
-                moveFuture.complete(Optional.of(new Move(col, gameId)));
+                moveFuture.complete(optionalMove);
             }
 
             @Override
