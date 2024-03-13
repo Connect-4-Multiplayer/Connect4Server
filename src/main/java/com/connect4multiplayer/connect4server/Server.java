@@ -1,8 +1,11 @@
 package com.connect4multiplayer.connect4server;
 
+import java.awt.image.DataBufferByte;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
@@ -10,18 +13,56 @@ import java.nio.channels.CompletionHandler;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class Server {
 
+    public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
+        new Server();
+        synchronized (waitForever) { waitForever.wait(); }
+    }
+
     private final ArrayList<Game> currentGames = new ArrayList<>();
     private final AsynchronousServerSocketChannel serverSock;
-    public Server(InetAddress ip) throws IOException {
+    private static final Object waitForever = new Object();
+
+    public Server() throws IOException, ExecutionException, InterruptedException {
         serverSock = AsynchronousServerSocketChannel.open();
-
-        final int PORT = 24553;
-        InetSocketAddress addr = new InetSocketAddress(ip, PORT);
-
+        final int PORT = 24554;
+        InetSocketAddress addr = new InetSocketAddress(PORT);
         serverSock.bind(addr);
+        establishClientConnection();
+    }
+
+    private void establishClientConnection() {
+        this.serverSock.accept(null, new CompletionHandler<AsynchronousSocketChannel, Void>() {
+            @Override
+            public void completed(AsynchronousSocketChannel client, Void unused) {
+                System.out.println("Connected");
+                readFromClient(client);
+                establishClientConnection();
+            }
+
+            @Override
+            public void failed(Throwable throwable, Void unused) {}
+        });
+    }
+    
+    private void readFromClient(AsynchronousSocketChannel client) {
+        ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES);
+        client.read(buffer, null, new CompletionHandler<>() {
+            @Override
+            public void completed(Integer result, Object attachment) {
+                buffer.flip();
+                client.write(buffer);
+                readFromClient(client);
+            }
+
+            @Override
+            public void failed(Throwable exc, Object attachment) {
+            }
+        });
     }
 
     public Optional<Move> validateMove(Move move) {
@@ -30,26 +71,15 @@ public class Server {
     }
 
     public CompletableFuture<Optional<Move>> handleMove() {
+        
 
         CompletableFuture<Optional<Move>> moveFuture = new CompletableFuture<>();
-
-        this.serverSock.accept(null, new CompletionHandler<AsynchronousSocketChannel, Void>() {
-            @Override
-            public void completed(AsynchronousSocketChannel client, Void unused) {
-                readMove(client, moveFuture);
-            }
-
-            @Override
-            public void failed(Throwable throwable, Void unused) {
-                moveFuture.complete(Optional.empty());
-            }
-        });
 
         return moveFuture.whenCompleteAsync((move, throwable) -> {
             if (move.isPresent()) {
                 Move m = move.get();
                 // pass col back to client
-
+                
 
             }
         });

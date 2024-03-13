@@ -25,10 +25,6 @@ public class Game {
      */
     int movesMde;
     /**
-     * true if it is currently the user's turn, false otherwise
-     */
-    boolean isPlayerTurn;
-    /**
      * The current state of the game board
      */
     long state;
@@ -37,37 +33,21 @@ public class Game {
      * Creates a new Game
      * @param playerStarts true if the user starts, false otherwise
      */
-    public Game(boolean playerStarts) {
-        isPlayerTurn = playerStarts;
-    }
+    public Game() {
 
-    /**
-     * Makes the user's move
-     * @param col The index of the column the user plays in
-     */
-    public void makePlayerTurn(int col) {
-        isPlayerTurn = false;
-        playMove(col);
-    }
-
-    /**
-     * Makes the computer's move
-     * @return The index of the column which the computer plays in
-     */
-    public int makeComputerMove() {
-        int col = makeOptimalMove(state, turn, movesMde);
-        playMove(col);
-        return col;
     }
 
     /**
      * Plays a move
      * @param col The index of the column to play in
      */
-    private void playMove(int col) {
-        state = nextState(state, turn, col, getHeight(col));
+    public boolean playMove(int col) {
+        int height = getHeight(col);
+        if (height == 6) return false;
+        state = nextState(state, turn, col, height);
         turn ^= 1;
         movesMde++;
+        return true;
     }
 
     /**
