@@ -1,6 +1,7 @@
 package com.connect4multiplayer.connect4server;
 
-import java.util.HashSet;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.util.Optional;
 
 import static com.connect4multiplayer.connect4server.Engine.*;
 
@@ -15,24 +16,21 @@ public class Game {
     /**
      * Represents the result of the game
      */
-    static final int WIN = 1, DRAW = 0, NOT_OVER = -1;
+    static final byte WIN = 1, LOSS = 2, DRAW = 3, NOT_OVER = 0;
     /**
      * The current turn in the game
      */
-    int turn = 1;
+    int turn = -1;
     /**
      * Number of moves made
      */
-    int movesMde;
+    int movesMade;
     /**
      * The current state of the game board
      */
     long state;
+    AsynchronousSocketChannel player1Client, player2Client;
 
-    /**
-     * Creates a new Game
-     * @param playerStarts true if the user starts, false otherwise
-     */
     public Game() {
 
     }
@@ -41,13 +39,13 @@ public class Game {
      * Plays a move
      * @param col The index of the column to play in
      */
-    public boolean playMove(int col) {
+    public Optional<Move> playMove(int col, int playerTurn) {
+        if (!(playerTurn == turn && getHeight(col) != 6 && checkGameOver() == NOT_OVER)) return Optional.empty();
         int height = getHeight(col);
-        if (height == 6) return false;
         state = nextState(state, turn, col, height);
         turn ^= 1;
-        movesMde++;
-        return true;
+        movesMade++;
+        return Optional.of(new Move((byte) col, (byte) height, (byte) playerTurn));
     }
 
     /**
@@ -63,26 +61,25 @@ public class Game {
      * Checks if the game is over
      * @return Integer representing the result of the game
      */
-    public int checkGameOver() {
+    public byte checkGameOver() {
         if (isWin(state, turn ^ 1)) return WIN;
-        if (movesMde == SPOTS) return DRAW;
+        if (movesMade == SPOTS) return DRAW;
         return NOT_OVER;
     }
 
     /**
      * Finds the four spots that create a win if one exists
-     * @return Set containing the winning spots if they exist, null otherwise
+     * @return Array containing the winning spots if they exist, null otherwise
      */
-    public HashSet<Integer> getWinningSpots() {
+    public byte[] getWinningSpots() {
         long board = getPieceLocations(state, turn ^ 1);
         for (int i = 1; i < 9; i += (1 / i << 2) + 1) {
             long connections = board;
-            for (int j = 0; j < 3; j++) connections = connections & (connections >>> i);
+            for (byte j = 0; j < 3; j++) connections = connections & (connections >>> i);
             if (connections != 0) {
-                HashSet<Integer> winningSpots = new HashSet<>();
-                int start = Long.numberOfTrailingZeros(connections);
-                for (int k = 0; k < 4; k++) winningSpots.add(start + i * k);
-                return winningSpots;
+                byte start = (byte) Long.numberOfTrailingZeros(connections);
+                start -= (byte) (start / 7);
+                return new byte[]{start, (byte) (i - (i > 1 ? 1 : 0))};
             }
         }
         return null;
