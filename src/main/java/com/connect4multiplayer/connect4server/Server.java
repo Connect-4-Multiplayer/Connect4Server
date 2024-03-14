@@ -14,6 +14,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public class Server {
+
+    public static void main(String[] args) {
+        ByteBuffer buff = ByteBuffer.allocate(2);
+        buff.put((byte) 2);
+        System.out.println(buff);
+        System.out.println(buff.put((byte) 4) == buff);
+        System.out.println(buff);
+    }
     private static final int INPUT_BYTES = 6;
     private static final int OUTPUT_BYTES = 7;
     private static final byte MOVE = 1;
@@ -49,20 +57,25 @@ public class Server {
     private synchronized void setupGame(AsynchronousSocketChannel client) {
         if (waitingPlayer.isPresent()) {
             int gameId = currentGames.size() - 1;
-            waitingPlayer.get().gameId = gameId;
-            players.get(client).gameId = gameId;
-            currentGames.get(gameId).player2Client = client;
-            currentGames.get(gameId).turn = 1;
+            Player opponent = waitingPlayer.get();
+            opponent.gameId = gameId;
+            Game game = currentGames.get(gameId);
+            Player player = players.get(client);
+            player.gameId = gameId;
+            player.game = game;
+            game.player2Client = client;
+            game.turn = 1;
             System.out.println("found second player");
             waitingPlayer = Optional.empty();
         }
         else {
+            Game game = new Game();
+            game.player1Client = client;
             Player player = players.get(client);
             player.turn = 1;
             player.gameId = currentGames.size();
+            player.game = game;
             waitingPlayer = Optional.of(player);
-            Game game = new Game();
-            game.player1Client = client;
             currentGames.add(game);
             System.out.println("found first player");
         }
@@ -92,100 +105,77 @@ public class Server {
     }
 
     private void processClientInput(AsynchronousSocketChannel client, ByteBuffer buffer) {
-        System.out.println("processing");
         Player player = players.get(client);
         int type = buffer.get();
         if (type == MOVE) {
-            Optional<Move> validMove = currentGames.get(player.gameId).playMove(buffer.get(), player.turn);
+            Optional<Move> validMove = player.game.playMove(buffer.get(), player.turn);
             validMove.ifPresent(move -> sendMoveToClients(move, currentGames.get(player.gameId)));
         }
         else {
-            System.out.println("player found");
             setupGame(client);
         }
     }
 
     private void sendMoveToClients(Move move, Game game) {
-        System.out.println("sending moves");
         ByteBuffer buffer = ByteBuffer.allocate(OUTPUT_BYTES);
         buffer.put(MOVE);
         buffer.put(move.col());
         buffer.put(move.height());
         buffer.put(move.player());
-        byte gameState = game.checkGameOver();
-        buffer.put(gameState);
-        if(gameState == Game.WIN) {
-            for(byte spot: game.getWinningSpots()) {
-                buffer.put(spot);
-            }
+        byte gameState = game.getGameState();
+        if (gameState != Game.WIN) {
+            buffer.put(gameState);
+            buffer.putShort((short) 0);
+            game.player1Client.write(buffer.flip());
+            game.player2Client.write(buffer.flip());
         }
         else {
-            buffer.putShort((short) 0);
+            byte winner = (byte) game.turn;
+            buffer.put(winner);
+            for (byte spot: game.getWinningSpots()) buffer.put(spot);
+            game.player1Client.write(buffer.flip());
+            buffer.put(4, (byte) (winner ^ 1));
+            game.player2Client.write(buffer.flip());
         }
-        buffer.flip();
-        game.player1Client.write(buffer);
-        buffer.flip();
-        game.player2Client.write(buffer);
-        System.out.println("sent move to client");
     }
 
-//    public Optional<Move> validateMove(Move move) {
-//        currentGames.get(move.gameId()).isValidMove(move.col());
-//        return Optional.empty();
-//    }
+    public void readMove(AsynchronousSocketChannel client, CompletableFuture<Optional<Move>> moveFuture) {
 
-    public CompletableFuture<Optional<Move>> handleMove() {
+        ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES + Byte.BYTES);
+        client.read(buffer, null, new CompletionHandler<Integer, Void>() {
+            @Override
+            public void completed(Integer result, Void unused) {
+                // -1 means no more bytes! Close connection
+                // Can also mean that the client disconnected
+                if (result == -1) {
+                    try {
+                        client.close();
+                    } catch (IOException ignored) {
+                        // Do nothing, we don't care if it fails here
+                    }
 
+                    moveFuture.complete(Optional.empty());
+                    return;
+                }
 
-        CompletableFuture<Optional<Move>> moveFuture = new CompletableFuture<>();
+                // If there are still bytes to read, read them
+                buffer.flip();
+                byte col = buffer.get();
+                int gameId = buffer.getInt();
 
-        return moveFuture.whenCompleteAsync((move, throwable) -> {
-            if (move.isPresent()) {
-                Move m = move.get();
-                // pass col back to client
-                
+//                Move move = new Move(col, gameId);
 
+//                Optional<Move> optionalMove = validateMove(move);
+                // Construct our move
+//                moveFuture.complete(optionalMove);
+            }
+
+            @Override
+            public void failed(Throwable throwable, Void unused) {
+                moveFuture.complete(Optional.empty());
             }
         });
     }
-
-//    public void readMove(AsynchronousSocketChannel client, CompletableFuture<Optional<Move>> moveFuture) {
-//
-//        ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES + Byte.BYTES);
-//        client.read(buffer, null, new CompletionHandler<Integer, Void>() {
-//            @Override
-//            public void completed(Integer result, Void unused) {
-//                // -1 means no more bytes! Close connection
-//                // Can also mean that the client disconnected
-//                if (result == -1) {
-//                    try {
-//                        client.close();
-//                    } catch (IOException ignored) {
-//                        // Do nothing, we don't care if it fails here
-//                    }
-//
-//                    moveFuture.complete(Optional.empty());
-//                    return;
-//                }
-//
-//                // If there are still bytes to read, read them
-//                buffer.flip();
-//                byte col = buffer.get();
-//                int gameId = buffer.getInt();
-//
-//                Move move = new Move(col, gameId);
-//
-//                Optional<Move> optionalMove = validateMove(move);
-//                // Construct our move
-//                moveFuture.complete(optionalMove);
-//            }
-//
-//            @Override
-//            public void failed(Throwable throwable, Void unused) {
-//                moveFuture.complete(Optional.empty());
-//            }
-//        });
-//    }
 
 
 }

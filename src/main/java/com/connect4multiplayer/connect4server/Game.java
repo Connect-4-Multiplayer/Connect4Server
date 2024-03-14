@@ -16,7 +16,7 @@ public class Game {
     /**
      * Represents the result of the game
      */
-    static final byte WIN = 1, LOSS = 2, DRAW = 3, NOT_OVER = 0;
+    static final byte WIN = 0, DRAW = 2, NOT_OVER = 3;
     /**
      * The current turn in the game
      */
@@ -40,7 +40,7 @@ public class Game {
      * @param col The index of the column to play in
      */
     public Optional<Move> playMove(int col, int playerTurn) {
-        if (!(playerTurn == turn && getHeight(col) != 6 && checkGameOver() == NOT_OVER)) return Optional.empty();
+        if (!(playerTurn == turn && getHeight(col) != 6 && getGameState() == NOT_OVER)) return Optional.empty();
         int height = getHeight(col);
         state = nextState(state, turn, col, height);
         turn ^= 1;
@@ -61,7 +61,7 @@ public class Game {
      * Checks if the game is over
      * @return Integer representing the result of the game
      */
-    public byte checkGameOver() {
+    public byte getGameState() {
         if (isWin(state, turn ^ 1)) return WIN;
         if (movesMade == SPOTS) return DRAW;
         return NOT_OVER;

@@ -5,10 +5,9 @@ import java.nio.channels.AsynchronousSocketChannel;
 public class Player {
     int gameId;
     int turn;
+    Game game;
 
-//    public Player(int gameId, int turn) {
-//        this.client = client;
-//        this.gameId = gameId;
-//        this.turn = turn;
+//    public Player(Game game) {
+//        this.game = game;
 //    }
 }
