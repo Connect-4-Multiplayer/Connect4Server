@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
@@ -67,17 +68,18 @@ public class Server {
             Player opponent = waitingPlayer.get();
             Game game = opponent.game;
             Player player = players.get(client);
+            player.turn = 0;
             player.game = game;
-            game.player2 = new Player(client, game);
+            game.player2 = player;
             game.turn = 1;
             System.out.println("found second player");
             waitingPlayer = Optional.empty();
         }
         else {
             Game game = new Game();
-            game.player1 = new Player(client, game);
+            game.player1 = players.get(client);
+            game.player1.game = game;
             waitingPlayer = Optional.of(game.player1);
-            currentGames.add(game);
             System.out.println("found first player");
         }
     }
@@ -98,10 +100,11 @@ public class Server {
 
     private void processClientInput(AsynchronousSocketChannel client, ByteBuffer buffer) {
         Player player = players.get(client);
+        System.out.println(player.game);
         int type = buffer.get();
         if (type == MOVE) {
             Optional<Move> validMove = player.game.playMove(buffer.get(), (byte) player.turn);
-            validMove.ifPresent(move -> sendMoveToClients(move, currentGames.get(player.gameId)));
+            validMove.ifPresent(move -> sendMoveToClients(move, player.game));
         }
         else {
             setupGame(client);

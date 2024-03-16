@@ -10,7 +10,7 @@ public class Player {
 
     public Player(AsynchronousSocketChannel client, Game game) {
         this.client = client;
-        this.game = game
+        this.game = game;
     }
 
     public Player(AsynchronousSocketChannel client) {
