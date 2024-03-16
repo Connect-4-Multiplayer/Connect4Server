@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class Server {
 
@@ -39,43 +40,43 @@ public class Server {
         establishClientConnection();
     }
 
-    private void establishClientConnection() {
+    private CompletableFuture<AsynchronousSocketChannel> establishClientConnection() {
+
+        CompletableFuture<AsynchronousSocketChannel> future = new CompletableFuture<>();
         this.serverSock.accept(null, new CompletionHandler<AsynchronousSocketChannel, Void>() {
             @Override
             public void completed(AsynchronousSocketChannel client, Void unused) {
                 System.out.println("Connected");
-                players.put(client, new Player());
+                players.put(client, new Player(client));
                 readFromClient(client);
                 establishClientConnection();
+                future.complete(client);
             }
 
             @Override
             public void failed(Throwable throwable, Void unused) {}
         });
+
+        return future;
+
     }
 
-    private synchronized void setupGame(AsynchronousSocketChannel client) {
+    private
+    void setupGame(AsynchronousSocketChannel client) {
         if (waitingPlayer.isPresent()) {
-            int gameId = currentGames.size() - 1;
             Player opponent = waitingPlayer.get();
-            opponent.gameId = gameId;
-            Game game = currentGames.get(gameId);
+            Game game = opponent.game;
             Player player = players.get(client);
-            player.gameId = gameId;
             player.game = game;
-            game.player2Client = client;
+            game.player2 = new Player(client, game);
             game.turn = 1;
             System.out.println("found second player");
             waitingPlayer = Optional.empty();
         }
         else {
             Game game = new Game();
-            game.player1Client = client;
-            Player player = players.get(client);
-            player.turn = 1;
-            player.gameId = currentGames.size();
-            player.game = game;
-            waitingPlayer = Optional.of(player);
+            game.player1 = new Player(client, game);
+            waitingPlayer = Optional.of(game.player1);
             currentGames.add(game);
             System.out.println("found first player");
         }
@@ -86,17 +87,8 @@ public class Server {
         client.read(buffer, null, new CompletionHandler<>() {
             @Override
             public void completed(Integer result, Object attachment) {
-                try {
-                    processClientInput(client, buffer.flip());
-                    readFromClient(client);
-                }
-                catch (BufferUnderflowException e) {
-                    try {
-                        client.close();
-                    } catch (IOException ex) {
-                        throw new RuntimeException(ex);
-                    }
-                }
+                processClientInput(client, buffer.flip());
+                readFromClient(client);
             }
 
             @Override
@@ -108,7 +100,7 @@ public class Server {
         Player player = players.get(client);
         int type = buffer.get();
         if (type == MOVE) {
-            Optional<Move> validMove = player.game.playMove(buffer.get(), player.turn);
+            Optional<Move> validMove = player.game.playMove(buffer.get(), (byte) player.turn);
             validMove.ifPresent(move -> sendMoveToClients(move, currentGames.get(player.gameId)));
         }
         else {
@@ -126,16 +118,16 @@ public class Server {
         if (gameState != Game.WIN) {
             buffer.put(gameState);
             buffer.putShort((short) 0);
-            game.player1Client.write(buffer.flip());
-            game.player2Client.write(buffer.flip());
+            game.player1.client.write(buffer.flip());
+            game.player2.client.write(buffer.flip());
         }
         else {
             byte winner = (byte) game.turn;
             buffer.put(winner);
             for (byte spot: game.getWinningSpots()) buffer.put(spot);
-            game.player1Client.write(buffer.flip());
+            game.player1.client.write(buffer.flip());
             buffer.put(4, (byte) (winner ^ 1));
-            game.player2Client.write(buffer.flip());
+            game.player2.client.write(buffer.flip());
         }
     }
 

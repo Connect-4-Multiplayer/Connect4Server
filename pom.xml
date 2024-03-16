@@ -50,6 +50,13 @@
         </plugin>
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+              <archive>
+                <manifest>
+                  <mainClass>com.connect4multiplayer.connect4server.Server</mainClass>
+                </manifest>
+              </archive>
+            </configuration>
           <version>3.0.2</version>
         </plugin>
         <plugin>

@@ -1,6 +1,5 @@
 package com.connect4multiplayer.connect4server;
 
-import java.nio.channels.AsynchronousSocketChannel;
 import java.util.Optional;
 
 import static com.connect4multiplayer.connect4server.Engine.*;
@@ -29,17 +28,13 @@ public class Game {
      * The current state of the game board
      */
     long state;
-    AsynchronousSocketChannel player1Client, player2Client;
-
-    public Game() {
-
-    }
+    Player player1, player2;
 
     /**
      * Plays a move
      * @param col The index of the column to play in
      */
-    public Optional<Move> playMove(int col, int playerTurn) {
+    public Optional<Move> playMove(byte col, byte playerTurn) {
         if (!(playerTurn == turn && getHeight(col) != 6 && getGameState() == NOT_OVER)) return Optional.empty();
         int height = getHeight(col);
         state = nextState(state, turn, col, height);
