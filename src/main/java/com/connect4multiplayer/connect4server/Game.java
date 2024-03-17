@@ -39,9 +39,12 @@ public class Game {
      * @param col The index of the column to play in
      */
     public Optional<Move> playMove(byte col, byte playerTurn) {
-        if (!(playerTurn == turn && getHeight(col) != 6 && getGameState() == NOT_OVER)) return Optional.empty();
         int height = getHeight(col);
+        if (height == 6 || getGameState() != NOT_OVER) return Optional.empty();
+        // We allow moves to be sent here because of pre moves
+        if (playerTurn != turn) return Optional.of(new Move(col, (byte) height, playerTurn));
         state = nextState(state, turn, col, height);
+        // Flips the turn
         turn ^= 1;
         movesMade++;
         return Optional.of(new Move(col, (byte) height, playerTurn));

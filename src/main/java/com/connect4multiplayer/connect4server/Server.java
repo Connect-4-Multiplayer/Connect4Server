@@ -7,7 +7,6 @@ import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -94,10 +93,9 @@ public class Server {
         int type = buffer.get();
         if (Message.MOVE.isType(type)) {
             Optional<Move> validMove = player.game.playMove(buffer.get(), (byte) player.turn);
-            validMove.ifPresentOrElse(move -> {
+            validMove.ifPresent(move -> {
+                player.moves.offer(move);
                 sendMoveToClients(move, player.game);
-            }, () -> {
-
             });
         }
         else {

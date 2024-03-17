@@ -7,7 +7,7 @@ public class Player {
     int turn = 1;
     AsynchronousSocketChannel client;
     Game game;
-    final LinkedList<Move> preMoves = new LinkedList<>();
+    final LinkedList<Move> moves = new LinkedList<>();
 
     public Player(AsynchronousSocketChannel client, Game game) {
         this.client = client;
