@@ -7,6 +7,16 @@ import java.util.*;
  * Engine class responsible for calculating the AI's moves
  */
 public class Engine {
+
+    enum Ranking {
+        BEST,
+        EXCELLENT,
+        INACCURACY,
+        MISTAKE,
+        BLUNDER
+
+    }
+
     /**
      * The worst minimax value possible
      */
