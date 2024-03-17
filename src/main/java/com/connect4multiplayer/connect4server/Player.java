@@ -37,14 +37,14 @@ public class Player {
     }
 
     public synchronized Optional<Move> playMove() {
-        if (game.turn != turn || moves.isEmpty()) return Optional.empty();
+        if (game.turn != turn || moves.isEmpty() || game.getGameState() != Game.NOT_OVER) return Optional.empty();
         Optional<Move> move = game.playMove(this);
-        if (move.isEmpty()) clearPreMoves();
+        if (move.isEmpty()) clearMoveQueue();
         System.out.println("Rows " + game.getHeight(3));
         return move;
     }
 
-    public synchronized void clearPreMoves() {
+    public synchronized void clearMoveQueue() {
         moveHeights = new int[7];
         moves.clear();
     }
