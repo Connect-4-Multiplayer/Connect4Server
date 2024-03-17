@@ -31,8 +31,8 @@ public enum Message {
         );
     }
 
-    public ByteBuffer constructReply(byte... args) {
-        return ByteBuffer.allocate(args.length + 1)
+    public ByteBuffer constructReply(int size, byte... args) {
+        return ByteBuffer.allocate(size)
                 .put(type)
                 .put(args);
     }

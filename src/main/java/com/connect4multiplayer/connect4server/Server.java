@@ -7,7 +7,6 @@ import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class Server {
@@ -89,22 +88,29 @@ public class Server {
 
     private void processClientInput(AsynchronousSocketChannel client, ByteBuffer buffer) {
         Player player = players.get(client);
-        System.out.println(player.game);
         int type = buffer.get();
         if (Message.MOVE.isType(type)) {
-            Optional<Move> validMove = player.game.playMove(buffer.get(), (byte) player.turn);
-            validMove.ifPresent(move -> {
-                player.moves.offer(move);
-                sendMoveToClients(move, player.game);
-            });
+            player.enqueueMove(buffer.get());
+            handleMove(player);
         }
         else {
             setupGame(client);
         }
     }
 
+    static int moves;
+
+    private void handleMove(Player player) {
+        player.playMove().ifPresent(move -> {
+            sendMoveToClients(move, player.game);
+            handleMove(player.getOpponent());
+        });
+    }
+
     private void sendMoveToClients(Move move, Game game) {
-        ByteBuffer buffer = Message.MOVE.constructReply(move.col(), move.height(), move.player());
+        moves++;
+        System.out.println("Moves " + moves);
+        ByteBuffer buffer = Message.MOVE.constructReply(7, move.col(), move.height(), move.player());
         byte gameState = game.getGameState();
         if (gameState != Game.WIN) {
             buffer.put(gameState);

@@ -1,8 +1,6 @@
 package com.connect4multiplayer.connect4server;
 
-import java.io.IOException;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 import static com.connect4multiplayer.connect4server.Engine.*;
 
@@ -34,20 +32,32 @@ public class Game {
     long state;
     Player player1, player2;
 
-    /**
-     * Plays a move
-     * @param col The index of the column to play in
-     */
-    public Optional<Move> playMove(byte col, byte playerTurn) {
-        int height = getHeight(col);
-        if (height == 6 || getGameState() != NOT_OVER) return Optional.empty();
+
+    public Optional<Move> validateMove(byte col, Player player) {
+        int height = getHeight(col) + player.moveHeights[col];
+        if (height == 6 || getGameState() != NOT_OVER) {
+            player.clearPreMoves();
+            return Optional.empty();
+        }
         // We allow moves to be sent here because of pre moves
-        if (playerTurn != turn) return Optional.of(new Move(col, (byte) height, playerTurn));
+        return Optional.of(new Move(col, (byte) height, (byte) player.turn));
+    }
+
+    public Optional<Move> playMove(Player player) {
+        if (player.turn != turn || player.moves.isEmpty()) {
+            return Optional.empty();
+        }
+        Move move = player.moves.getFirst();
+        int col = move.col();
+        int height = getHeight(col);
+        if (height == 6) return Optional.empty();
+        player.moves.pollFirst();
         state = nextState(state, turn, col, height);
         // Flips the turn
         turn ^= 1;
         movesMade++;
-        return Optional.of(new Move(col, (byte) height, playerTurn));
+        System.out.println("valid move");
+        return Optional.of(new Move(move.col(), (byte) height, move.player()));
     }
 
     /**
