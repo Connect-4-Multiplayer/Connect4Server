@@ -8,16 +8,10 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 public class Server {
 
-    public static void main(String[] args) {
-        ByteBuffer buff = ByteBuffer.allocate(2);
-        buff.put((byte) 2);
-        System.out.println(buff);
-        System.out.println(buff.put((byte) 4) == buff);
-        System.out.println(buff);
-    }
     private static final int INPUT_BYTES = 6;
     private final AsynchronousServerSocketChannel serverSock;
     private final HashMap<AsynchronousSocketChannel, Player> players = new HashMap<>();
@@ -32,8 +26,6 @@ public class Server {
     }
 
     private void establishClientConnection() {
-
-        CompletableFuture<AsynchronousSocketChannel> future = new CompletableFuture<>();
         this.serverSock.accept(null, new CompletionHandler<AsynchronousSocketChannel, Void>() {
             @Override
             public void completed(AsynchronousSocketChannel client, Void unused) {
@@ -41,11 +33,12 @@ public class Server {
                 players.put(client, new Player(client));
                 readFromClient(client);
                 establishClientConnection();
-                future.complete(client);
             }
 
             @Override
-            public void failed(Throwable throwable, Void unused) {}
+            public void failed(Throwable throwable, Void unused) {
+                System.out.println("failed");
+            }
         });
 
     }
@@ -71,12 +64,15 @@ public class Server {
         }
     }
     
-    private void readFromClient(AsynchronousSocketChannel client) {
+    private synchronized void readFromClient(AsynchronousSocketChannel client) {
         ByteBuffer buffer = ByteBuffer.allocate(INPUT_BYTES);
         client.read(buffer, null, new CompletionHandler<>() {
             @Override
             public void completed(Integer result, Object attachment) {
-                processClientInput(client, buffer.flip());
+                buffer.flip();
+                while (buffer.hasRemaining()) {
+                    processClientInput(client, buffer);
+                }
                 // Accept another read
                 readFromClient(client);
             }
@@ -86,7 +82,7 @@ public class Server {
         });
     }
 
-    private void processClientInput(AsynchronousSocketChannel client, ByteBuffer buffer) {
+    private synchronized void processClientInput(AsynchronousSocketChannel client, ByteBuffer buffer) {
         Player player = players.get(client);
         int type = buffer.get();
         if (Message.MOVE.isType(type)) {
@@ -107,26 +103,27 @@ public class Server {
         });
     }
 
-    private void sendMoveToClients(Move move, Game game) {
+    private CompletableFuture<Move> sendMoveToClients(Move move, Game game) {
         moves++;
-        System.out.println("Moves " + moves);
+        CompletableFuture<Move> moveFuture = new CompletableFuture<>();
         ByteBuffer buffer = Message.MOVE.constructReply(7, move.col(), move.height(), move.player());
+        ByteBuffer buffer1 = Message.MOVE.constructReply(7, move.col(), move.height(), move.player());
         byte gameState = game.getGameState();
         if (gameState != Game.WIN) {
-            buffer.put(gameState);
-            buffer.putShort((short) 0);
+            buffer.put(gameState).putShort((short) 0);
+            buffer1.put(gameState).putShort((short) 0);
             game.player1.client.write(buffer.flip());
-            game.player2.client.write(buffer.flip());
+            game.player2.client.write(buffer1.flip());
         }
         else {
             byte winner = (byte) game.turn;
-            buffer.put(winner);
-            buffer.put(game.getWinningSpots());
+            buffer.put(winner).put(game.getWinningSpots());
             game.player1.client.write(buffer.flip());
             // Flips winner bit since the other player has a victory when the first has a loss and vice versa
             buffer.put(4, (byte) (winner ^ 1));
             game.player2.client.write(buffer.flip());
         }
+        return moveFuture;
     }
 
 }

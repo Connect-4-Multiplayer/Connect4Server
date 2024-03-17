@@ -21,19 +21,30 @@ public class Player {
         this.game = null;
     }
 
-    public void enqueueMove(byte col) {
+    public synchronized void enqueueMove(byte col) {
         game.validateMove(col, this).ifPresent(move -> {
             moveHeights[col]++;
             moves.add(move);
+
         });
-        System.out.println(moves.size());
+        for (Move move : moves) {
+            System.out.print("Player " + move.player());
+            System.out.print(" Col " + move.col());
+            System.out.print(" Height " + move.height());
+            System.out.print(", ");
+        }
+        System.out.println();
     }
 
-    public Optional<Move> playMove() {
-        return game.playMove(this);
+    public synchronized Optional<Move> playMove() {
+        if (game.turn != turn || moves.isEmpty()) return Optional.empty();
+        Optional<Move> move = game.playMove(this);
+        if (move.isEmpty()) clearPreMoves();
+        System.out.println("Rows " + game.getHeight(3));
+        return move;
     }
 
-    public void clearPreMoves() {
+    public synchronized void clearPreMoves() {
         moveHeights = new int[7];
         moves.clear();
     }

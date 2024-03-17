@@ -33,30 +33,24 @@ public class Game {
     Player player1, player2;
 
 
-    public Optional<Move> validateMove(byte col, Player player) {
+    public synchronized Optional<Move> validateMove(byte col, Player player) {
         int height = getHeight(col) + player.moveHeights[col];
-        if (height == 6 || getGameState() != NOT_OVER) {
-            player.clearPreMoves();
-            return Optional.empty();
-        }
+        if (height >= 6 || getGameState() != NOT_OVER) return Optional.empty();
         // We allow moves to be sent here because of pre moves
         return Optional.of(new Move(col, (byte) height, (byte) player.turn));
     }
 
-    public Optional<Move> playMove(Player player) {
-        if (player.turn != turn || player.moves.isEmpty()) {
-            return Optional.empty();
-        }
+    public synchronized Optional<Move> playMove(Player player) {
         Move move = player.moves.getFirst();
         int col = move.col();
         int height = getHeight(col);
         if (height == 6) return Optional.empty();
         player.moves.pollFirst();
+        player.moveHeights[col]--;
         state = nextState(state, turn, col, height);
         // Flips the turn
         turn ^= 1;
         movesMade++;
-        System.out.println("valid move");
         return Optional.of(new Move(move.col(), (byte) height, move.player()));
     }
 
