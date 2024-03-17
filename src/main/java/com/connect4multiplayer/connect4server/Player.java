@@ -1,12 +1,13 @@
 package com.connect4multiplayer.connect4server;
 
 import java.nio.channels.AsynchronousSocketChannel;
-import java.util.Optional;
+import java.util.LinkedList;
 
 public class Player {
     int turn = 1;
     AsynchronousSocketChannel client;
     Game game;
+    final LinkedList<Move> preMoves = new LinkedList<>();
 
     public Player(AsynchronousSocketChannel client, Game game) {
         this.client = client;

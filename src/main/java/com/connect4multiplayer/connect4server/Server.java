@@ -2,18 +2,14 @@ package com.connect4multiplayer.connect4server;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.sql.SQLOutput;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 public class Server {
 
@@ -25,15 +21,11 @@ public class Server {
         System.out.println(buff);
     }
     private static final int INPUT_BYTES = 6;
-    private static final int OUTPUT_BYTES = 7;
-    private static final byte MOVE = 1;
-
-    private final ArrayList<Game> currentGames = new ArrayList<>();
     private final AsynchronousServerSocketChannel serverSock;
     private final HashMap<AsynchronousSocketChannel, Player> players = new HashMap<>();
-    private Optional<Player> waitingPlayer = Optional.empty();
+    private Player waitingPlayer = null;
 
-    public Server() throws IOException, ExecutionException, InterruptedException {
+    public Server() throws IOException {
         serverSock = AsynchronousServerSocketChannel.open();
         final int PORT = 24454;
         InetSocketAddress addr = new InetSocketAddress(PORT);
@@ -41,7 +33,7 @@ public class Server {
         establishClientConnection();
     }
 
-    private CompletableFuture<AsynchronousSocketChannel> establishClientConnection() {
+    private void establishClientConnection() {
 
         CompletableFuture<AsynchronousSocketChannel> future = new CompletableFuture<>();
         this.serverSock.accept(null, new CompletionHandler<AsynchronousSocketChannel, Void>() {
@@ -58,14 +50,11 @@ public class Server {
             public void failed(Throwable throwable, Void unused) {}
         });
 
-        return future;
-
     }
 
-    private
-    void setupGame(AsynchronousSocketChannel client) {
-        if (waitingPlayer.isPresent()) {
-            Player opponent = waitingPlayer.get();
+    private void setupGame(AsynchronousSocketChannel client) {
+        if (waitingPlayer != null) {
+            Player opponent = waitingPlayer;
             Game game = opponent.game;
             Player player = players.get(client);
             player.turn = 0;
@@ -73,13 +62,13 @@ public class Server {
             game.player2 = player;
             game.turn = 1;
             System.out.println("found second player");
-            waitingPlayer = Optional.empty();
+            waitingPlayer = null;
         }
         else {
             Game game = new Game();
             game.player1 = players.get(client);
             game.player1.game = game;
-            waitingPlayer = Optional.of(game.player1);
+            waitingPlayer = game.player1;
             System.out.println("found first player");
         }
     }
@@ -90,6 +79,7 @@ public class Server {
             @Override
             public void completed(Integer result, Object attachment) {
                 processClientInput(client, buffer.flip());
+                // Accept another read
                 readFromClient(client);
             }
 
@@ -102,9 +92,13 @@ public class Server {
         Player player = players.get(client);
         System.out.println(player.game);
         int type = buffer.get();
-        if (type == MOVE) {
+        if (Message.MOVE.isType(type)) {
             Optional<Move> validMove = player.game.playMove(buffer.get(), (byte) player.turn);
-            validMove.ifPresent(move -> sendMoveToClients(move, player.game));
+            validMove.ifPresentOrElse(move -> {
+                sendMoveToClients(move, player.game);
+            }, () -> {
+
+            });
         }
         else {
             setupGame(client);
@@ -112,11 +106,7 @@ public class Server {
     }
 
     private void sendMoveToClients(Move move, Game game) {
-        ByteBuffer buffer = ByteBuffer.allocate(OUTPUT_BYTES);
-        buffer.put(MOVE);
-        buffer.put(move.col());
-        buffer.put(move.height());
-        buffer.put(move.player());
+        ByteBuffer buffer = Message.MOVE.constructReply(move.col(), move.height(), move.player());
         byte gameState = game.getGameState();
         if (gameState != Game.WIN) {
             buffer.put(gameState);
@@ -127,50 +117,12 @@ public class Server {
         else {
             byte winner = (byte) game.turn;
             buffer.put(winner);
-            for (byte spot: game.getWinningSpots()) buffer.put(spot);
+            buffer.put(game.getWinningSpots());
             game.player1.client.write(buffer.flip());
+            // Flips winner bit since the other player has a victory when the first has a loss and vice versa
             buffer.put(4, (byte) (winner ^ 1));
             game.player2.client.write(buffer.flip());
         }
     }
-
-    public void readMove(AsynchronousSocketChannel client, CompletableFuture<Optional<Move>> moveFuture) {
-
-        ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES + Byte.BYTES);
-        client.read(buffer, null, new CompletionHandler<Integer, Void>() {
-            @Override
-            public void completed(Integer result, Void unused) {
-                // -1 means no more bytes! Close connection
-                // Can also mean that the client disconnected
-                if (result == -1) {
-                    try {
-                        client.close();
-                    } catch (IOException ignored) {
-                        // Do nothing, we don't care if it fails here
-                    }
-
-                    moveFuture.complete(Optional.empty());
-                    return;
-                }
-
-                // If there are still bytes to read, read them
-                buffer.flip();
-                byte col = buffer.get();
-                int gameId = buffer.getInt();
-
-//                Move move = new Move(col, gameId);
-
-//                Optional<Move> optionalMove = validateMove(move);
-                // Construct our move
-//                moveFuture.complete(optionalMove);
-            }
-
-            @Override
-            public void failed(Throwable throwable, Void unused) {
-                moveFuture.complete(Optional.empty());
-            }
-        });
-    }
-
 
 }

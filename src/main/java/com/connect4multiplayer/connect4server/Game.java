@@ -1,6 +1,8 @@
 package com.connect4multiplayer.connect4server;
 
+import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 import static com.connect4multiplayer.connect4server.Engine.*;
 
@@ -8,6 +10,8 @@ import static com.connect4multiplayer.connect4server.Engine.*;
  * Keeps track of the current state of the game
  */
 public class Game {
+
+
     /**
      * Number of spots on the board
      */
@@ -40,7 +44,7 @@ public class Game {
         state = nextState(state, turn, col, height);
         turn ^= 1;
         movesMade++;
-        return Optional.of(new Move((byte) col, (byte) height, (byte) playerTurn));
+        return Optional.of(new Move(col, (byte) height, playerTurn));
     }
 
     /**
