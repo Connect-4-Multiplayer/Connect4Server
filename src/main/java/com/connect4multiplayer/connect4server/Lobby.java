@@ -14,7 +14,8 @@ public class Lobby {
         ALTERNATING
     }
 
-    TimeSetting timeSetting = new TimeSetting(false, 100, 1);
+    TurnOrder turnOrder = TurnOrder.FIRST;
+    TimeSetting timeSetting = new TimeSetting(false, 180, 1);
 
     public Lobby(Player host) {
         hostPlayer = host;
@@ -31,7 +32,13 @@ public class Lobby {
         hostPlayer.game = game;
         joiningPlayer.game = game;
         hostPlayer.turn = 0;
+        game.turn = 1;
+
         //TODO
+    }
+
+    public void applySettings(Game game) {
+
     }
 
 //    private void setupGame(AsynchronousSocketChannel client) {
