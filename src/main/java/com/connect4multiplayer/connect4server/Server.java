@@ -8,7 +8,6 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 public class Server {
 
@@ -63,7 +62,7 @@ public class Server {
             System.out.println("found first player");
         }
     }
-    
+
     private synchronized void readFromClient(AsynchronousSocketChannel client) {
         ByteBuffer buffer = ByteBuffer.allocate(INPUT_BYTES);
         client.read(buffer, null, new CompletionHandler<>() {

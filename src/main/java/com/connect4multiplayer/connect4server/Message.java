@@ -6,7 +6,9 @@ public enum Message {
 
     FIND_OPPONENT(0),
     MOVE(1),
-    LOBBY(2);
+    LOBBY(2),
+    LOBBY_JOIN(3);
+
 
     final byte type;
 

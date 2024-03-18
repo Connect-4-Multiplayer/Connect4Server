@@ -1,24 +1,22 @@
 package com.connect4multiplayer.connect4server;
 
 import java.nio.channels.AsynchronousSocketChannel;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Optional;
 
 public class Player {
-    int turn = 1;
-    AsynchronousSocketChannel client;
-    Game game;
-    final LinkedList<Move> moves = new LinkedList<>();
-    int[] moveHeights = new int[7];
+    public int turn = 1;
+    public final AsynchronousSocketChannel client;
+    public Lobby lobby;
+    public Game game;
 
-    public Player(AsynchronousSocketChannel client, Game game) {
-        this.client = client;
-        this.game = game;
-    }
+    final LinkedList<Move> moves = new LinkedList<>();
+    final ArrayList<Integer> deltaMinimaxValues = new ArrayList<>();
+    int[] moveHeights = new int[7];
 
     public Player(AsynchronousSocketChannel client) {
         this.client = client;
-        this.game = null;
     }
 
     public synchronized void enqueueMove(byte col) {
