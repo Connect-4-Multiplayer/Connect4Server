@@ -1,21 +1,28 @@
 package com.connect4multiplayer.connect4server;
 
-import java.nio.channels.AsynchronousSocketChannel;
+import java.util.Random;
 
 public class Lobby {
 
     Game game;
     Player hostPlayer, joiningPlayer;
 
-    enum TurnOrder {
-        FIRST,
-        SECOND,
+
+    enum InitialOrder {
+        HOST,
+        JOINING,
+        RANDOM
+    }
+    enum NextOrder {
+        STAY,
         RANDOM,
         ALTERNATING
     }
 
-    TurnOrder turnOrder = TurnOrder.FIRST;
-    TimeSetting timeSetting = new TimeSetting(false, 180, 1);
+    InitialOrder turnOrder = InitialOrder.RANDOM;
+
+    NextOrder nextOrder = NextOrder.ALTERNATING;
+    TimeSetting timeSetting = new TimeSetting(false, 180, 0);
 
     public Lobby(Player host) {
         hostPlayer = host;
@@ -32,13 +39,22 @@ public class Lobby {
         hostPlayer.game = game;
         joiningPlayer.game = game;
         hostPlayer.turn = 0;
-        game.turn = 1;
 
         //TODO
     }
 
-    public void applySettings(Game game) {
+    public void updateSettingsAfterGame(Game prevGame) {
+        Random rand = new Random();
+        switch (turnOrder) {
+            case HOST -> prevGame.turn = 1;
+            case JOINING -> prevGame.turn = 0;
+            case RANDOM -> prevGame.turn = rand.nextInt();
+        }
 
+        switch (nextOrder) {
+            case RANDOM -> prevGame.turn = rand.nextInt();
+            case ALTERNATING -> prevGame.turn ^= 1;
+        }
     }
 
 //    private void setupGame(AsynchronousSocketChannel client) {
