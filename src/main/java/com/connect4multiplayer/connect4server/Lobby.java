@@ -7,21 +7,20 @@ public class Lobby {
     Game game;
     Player hostPlayer, joiningPlayer;
 
+    // Turn orders
+    private static final byte HOST = 0;
+    private static final byte JOINING = 1;
+    private static final byte INIT_RANDOM = 2;
 
-    enum InitialOrder {
-        HOST,
-        JOINING,
-        RANDOM
-    }
-    enum NextOrder {
-        STAY,
-        RANDOM,
-        ALTERNATING
-    }
+    // Next orders
+    private static final byte STAY = 0;
+    private static final byte ALTERNATING = 1;
+    private static final byte RANDOM = 2;
 
-    InitialOrder turnOrder = InitialOrder.RANDOM;
 
-    NextOrder nextOrder = NextOrder.ALTERNATING;
+    int turnOrder = INIT_RANDOM;
+
+    int nextOrder = ALTERNATING;
     TimeSetting timeSetting = new TimeSetting(false, 180, 0);
 
     public Lobby(Player host) {
@@ -38,38 +37,27 @@ public class Lobby {
         game = new Game();
         hostPlayer.game = game;
         joiningPlayer.game = game;
-        hostPlayer.turn = 0;
 
-        //TODO
-    }
 
-    public void updateSettingsAfterGame(Game prevGame) {
         Random rand = new Random();
         switch (turnOrder) {
-            case HOST -> prevGame.turn = 1;
-            case JOINING -> prevGame.turn = 0;
-            case RANDOM -> prevGame.turn = rand.nextInt();
+            case HOST -> hostPlayer.turn = 1;
+            case JOINING -> hostPlayer.turn = 0;
+            case INIT_RANDOM -> hostPlayer.turn = rand.nextInt(2);
         }
 
-        switch (nextOrder) {
-            case RANDOM -> prevGame.turn = rand.nextInt();
-            case ALTERNATING -> prevGame.turn ^= 1;
-        }
+        game.turn = 1;
     }
 
-//    private void setupGame(AsynchronousSocketChannel client) {
-//
-//        game = new Game();
-//        Player opponent = hostPlayer;
-//        Game game = opponent.game;
-//        Player player = players.get(client);
-//        player.turn = 0;
-//        player.game = game;
-//        game.player2 = player;
-//        game.turn = 1;
-//        System.out.println("found second player");
-//        hostPlayer = null;
-//    }
+    public void updateSettingsAfterGame() {
 
+        Random rand = new Random();
+        switch (nextOrder) {
+            case ALTERNATING -> turnOrder = turnOrder ^ 1;
+            case RANDOM -> turnOrder = rand.nextInt(2) ;
+        }
+
+        joiningPlayer.turn = hostPlayer.turn ^ 1;
+    }
 
 }
