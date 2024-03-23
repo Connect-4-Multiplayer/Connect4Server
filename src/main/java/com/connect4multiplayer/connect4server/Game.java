@@ -1,5 +1,7 @@
 package com.connect4multiplayer.connect4server;
 
+import com.connect4multiplayer.connect4server.lobbies.Lobby;
+
 import java.util.Optional;
 
 import static com.connect4multiplayer.connect4server.Engine.*;
@@ -21,17 +23,17 @@ public class Game {
     /**
      * The current turn in the game
      */
-    int turn = -1;
+    public int turn = -1;
     /**
      * Number of moves made
      */
-    int movesMade;
+    public int movesMade;
     /**
      * The current state of the game board
      */
-    long state;
-    Player player1, player2;
+    public long state;
 
+    public Player player1, player2;
 
     public synchronized Optional<Move> validateMove(byte col, Player player) {
         int height = getHeight(col) + player.moveHeights[col];
@@ -68,7 +70,9 @@ public class Game {
      * @return Integer representing the result of the game
      */
     public byte getGameState() {
-        if (isWin(state, turn ^ 1)) return WIN;
+        if (isWin(state, turn ^ 1)) {
+            return WIN;
+        }
         if (movesMade == SPOTS) return DRAW;
         return NOT_OVER;
     }

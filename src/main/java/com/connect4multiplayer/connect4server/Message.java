@@ -7,7 +7,8 @@ public enum Message {
     FIND_OPPONENT(0),
     MOVE(1),
     LOBBY(2),
-    LOBBY_JOIN(3);
+    LOBBY_JOIN(3),
+    LOBBY_START(4);
 
 
     final byte type;
@@ -16,7 +17,7 @@ public enum Message {
         this.type = (byte) type;
     }
 
-    public boolean isType(int type) {
+    public boolean hasRequestNum(int type) {
         return this.type == type;
     }
 

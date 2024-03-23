@@ -1,20 +1,28 @@
 package com.connect4multiplayer.connect4server;
 
+import com.connect4multiplayer.connect4server.lobbies.Lobby;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 
 public class Server {
 
-    private static final int INPUT_BYTES = 6;
     private final AsynchronousServerSocketChannel serverSock;
     private final HashMap<AsynchronousSocketChannel, Player> players = new HashMap<>();
+
+    private static final int INPUT_BYTES = 1024;
+
+    private final ArrayList<Lobby> lobbies = new ArrayList<>();
     private Player waitingPlayer = null;
+
+    static int moves;
 
     public Server() throws IOException {
         serverSock = AsynchronousServerSocketChannel.open();
@@ -42,7 +50,11 @@ public class Server {
 
     }
 
-    private void setupGame(AsynchronousSocketChannel client) {
+    public void removeLobby(Lobby lobby) {
+        lobbies.remove(lobby);
+    }
+
+    private void startMatchmaking(AsynchronousSocketChannel client) {
         if (waitingPlayer != null) {
             Player opponent = waitingPlayer;
             Game game = opponent.game;
@@ -83,17 +95,42 @@ public class Server {
 
     private synchronized void processClientInput(AsynchronousSocketChannel client, ByteBuffer buffer) {
         Player player = players.get(client);
-        int type = buffer.get();
-        if (Message.MOVE.isType(type)) {
+        int reqNum = buffer.get();
+        if (Message.MOVE.hasRequestNum(reqNum)) {
             player.enqueueMove(buffer.get());
             handleMove(player);
+            return;
         }
-        else {
-            setupGame(client);
+
+        if (Message.FIND_OPPONENT.hasRequestNum(reqNum)){
+            startMatchmaking(client);
+            return;
+        }
+
+        if (Message.LOBBY.hasRequestNum(reqNum)) {
+            Lobby lobby = new Lobby(this, player);
+            player.lobby = lobby;
+            lobbies.add(lobby);
+            return;
+        }
+
+        if (Message.LOBBY_JOIN.hasRequestNum(reqNum)) {
+            // TODO prevent people from joining after full
+            int id = buffer.getInt();
+            Lobby lobby = lobbies.get(id);
+            lobby.add(player);
+            player.lobby = lobby;
+            return;
+        }
+
+        if (Message.LOBBY_START.hasRequestNum(reqNum)) {
+
+            if (player.isHost) {
+
+            }
         }
     }
 
-    static int moves;
 
     private void handleMove(Player player) {
         player.playMove().ifPresent(move -> {

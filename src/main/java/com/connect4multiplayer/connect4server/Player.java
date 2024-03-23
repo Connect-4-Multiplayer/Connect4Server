@@ -1,5 +1,7 @@
 package com.connect4multiplayer.connect4server;
 
+import com.connect4multiplayer.connect4server.lobbies.Lobby;
+
 import java.nio.channels.AsynchronousSocketChannel;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -10,6 +12,8 @@ public class Player {
     public final AsynchronousSocketChannel client;
     public Lobby lobby;
     public Game game;
+
+    public boolean isHost = false;
 
     final LinkedList<Move> moves = new LinkedList<>();
     final ArrayList<Integer> deltaMinimaxValues = new ArrayList<>();
@@ -23,7 +27,6 @@ public class Player {
         game.validateMove(col, this).ifPresent(move -> {
             moveHeights[col]++;
             moves.add(move);
-
         });
         for (Move move : moves) {
             System.out.print("Player " + move.player());

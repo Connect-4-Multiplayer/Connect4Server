@@ -1,4 +1,4 @@
-package com.connect4multiplayer.connect4server;
+package com.connect4multiplayer.connect4server.lobbies;
 
 import javax.print.attribute.standard.Severity;
 
