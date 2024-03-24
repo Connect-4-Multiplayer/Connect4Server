@@ -6,14 +6,13 @@ import com.connect4multiplayer.connect4server.Player;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
 public class Lobby implements Closeable {
 
     // Turn orders
     private static final byte HOST = 0;
-    private static final byte GUEST = 1;
+    private static final byte JOINING = 1;
     private static final byte INIT_RANDOM = 2;
 
     // Next orders
@@ -22,23 +21,18 @@ public class Lobby implements Closeable {
     private static final byte RANDOM = 2;
 
 
-    public Server server;
-    public Game game;
+    Server server;
+    Game game;
     public Player host;
-    public Player guest;
+    Player guest;
+    int turnOrder = INIT_RANDOM;
+    int nextOrder = ALTERNATING;
+    TimeSetting timeSetting = new TimeSetting(false, 180, 0);
     public short code;
-    
-    public final byte isPrivate;
-    public int turnOrder = INIT_RANDOM;
-    public int nextOrder = ALTERNATING;
-    short startTime = 180;
-    byte increment = 0;
-    byte isUnlimited = 0;
 
-    public Lobby(Server server, Player host, short code, boolean isPrivate) {
+    public Lobby(Server server, Player host, short code) {
         this.server = server;
         this.code = code;
-        this.isPrivate = (byte) (isPrivate ? 1 : 0);
         add(host);
     }
 
@@ -46,7 +40,6 @@ public class Lobby implements Closeable {
         if (host == null) {
             host = player;
             player.lobby = this;
-            player.isHost = true;
             return true;
         } else if (guest == null) {
             guest = player;
@@ -80,7 +73,7 @@ public class Lobby implements Closeable {
         Random rand = new Random();
         switch (turnOrder) {
             case HOST -> host.turn = 1;
-            case GUEST -> host.turn = 0;
+            case JOINING -> host.turn = 0;
             case INIT_RANDOM -> host.turn = rand.nextInt(2);
         }
         guest.turn = host.turn ^ 1;
@@ -92,7 +85,7 @@ public class Lobby implements Closeable {
     public void updateSettingsAfterGame() {
         Random rand = new Random();
         switch (nextOrder) {
-            case ALTERNATING -> turnOrder ^= 1;
+            case ALTERNATING -> turnOrder = turnOrder ^ 1;
             case RANDOM -> turnOrder = rand.nextInt(2) ;
         }
     }
@@ -100,26 +93,5 @@ public class Lobby implements Closeable {
     @Override
     public void close() throws IOException {
         server.removeLobby(this);
-    }
-
-    public byte[] getSettings() {
-        final int size = 134;
-        byte[] settings = new byte[size];
-        int i = 0;
-        for (byte b : new byte[]{isPrivate, (byte) turnOrder, (byte) nextOrder,
-                isUnlimited, increment, (byte) (startTime >> 8), (byte) startTime}) {
-            settings[i++] = b;
-        }
-        for (byte b : host.name.getBytes(StandardCharsets.UTF_16BE)) settings[i++] = b;
-        for (byte b : guest.name.getBytes(StandardCharsets.UTF_16BE)) settings[i++] = b;
-        return settings;
-    }
-    
-    public void setSettings(byte turnOrder, byte nextOrder, byte isUnlimited, byte increment, short startTime) {
-        this.turnOrder = turnOrder;
-        this.nextOrder = nextOrder;
-        this.isUnlimited = isUnlimited;
-        this.increment = increment;
-        this.startTime = startTime;
     }
 }
