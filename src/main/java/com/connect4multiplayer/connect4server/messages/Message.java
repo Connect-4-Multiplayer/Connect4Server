@@ -22,7 +22,8 @@ public abstract class Message {
             case MATCH_MAKING -> new MatchMaking(type);
             case MOVE -> new Move(type);
             case LOBBY_JOIN -> new LobbyJoin(type);
-            default -> new GameStart(type);
+            case GAME_START -> new GameStart(type);
+            default -> null;
         };
     }
 
