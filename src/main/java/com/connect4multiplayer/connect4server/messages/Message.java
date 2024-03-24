@@ -27,7 +27,7 @@ public abstract class Message {
      * @param args The bytes to send. Must be smaller than the size of the reply to be constructed
      * @throws IllegalArgumentException when the size is greater than the size of the request
      */
-    public ByteBuffer constructReply(int size, byte... args) {
+    public ByteBuffer constructMessage(int size, byte... args) {
         return ByteBuffer.allocate(size)
                 .put(type)
                 .put(args);

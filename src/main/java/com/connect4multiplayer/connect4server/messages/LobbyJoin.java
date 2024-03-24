@@ -34,11 +34,11 @@ public class LobbyJoin extends Message {
     }
 
     private void sendFailure(Player player) {
-        player.client.write(constructReply(FAILURE_MESSAGE_SIZE, LOBBY_JOIN, FAIL).flip());
+        player.client.write(constructMessage(FAILURE_MESSAGE_SIZE, LOBBY_JOIN, FAIL).flip());
     }
 
     private void sendSuccess(Player player, String name) {
-        player.client.write(constructReply(SUCCESS_MESSAGE_SIZE, LOBBY_JOIN, SUCCESS)
+        player.client.write(constructMessage(SUCCESS_MESSAGE_SIZE, LOBBY_JOIN, SUCCESS)
                 .put(name.getBytes(StandardCharsets.UTF_16BE))
                 .flip()
         );
