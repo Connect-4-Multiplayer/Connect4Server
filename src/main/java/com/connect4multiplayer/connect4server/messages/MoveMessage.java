@@ -28,7 +28,7 @@ public class MoveMessage extends Message {
     }
 
     private void sendMoveToClients(Move move, Game game) {
-        ByteBuffer buffer = constructReply(7, move.col(), move.height(), move.player());
+        ByteBuffer buffer = constructMessage(7, move.col(), move.height(), move.player());
         byte gameState = game.getGameState();
         if (gameState != Game.WIN) {
             buffer.put(gameState).putShort((short) 0);

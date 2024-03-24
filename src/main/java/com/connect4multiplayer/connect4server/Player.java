@@ -12,7 +12,8 @@ public class Player {
     public Lobby lobby;
     public Game game;
 
-    public boolean isReady = false;
+    public boolean isReady;
+    public boolean isHost;
 
     final LinkedList<Move> moves = new LinkedList<>();
     public String name;
@@ -38,13 +39,10 @@ public class Player {
     }
 
     public synchronized Optional<Move> playMove() {
-        System.out.println("Playing move");
         if (game == null) return Optional.empty();
         if (game.turn != turn || moves.isEmpty() || game.getGameState() != Game.NOT_OVER) return Optional.empty();
-        System.out.println("here");
         Optional<Move> move = game.playMove(this);
         if (move.isEmpty()) clearMoveQueue();
-        System.out.println("Rows " + game.getHeight(3));
         return move;
     }
 

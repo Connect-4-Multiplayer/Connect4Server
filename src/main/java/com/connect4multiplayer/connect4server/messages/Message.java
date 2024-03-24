@@ -21,10 +21,8 @@ public abstract class Message {
         };
     }
 
-    public ByteBuffer constructReply(int size, byte... args) {
-        return ByteBuffer.allocate(size)
-                .put(type)
-                .put(args);
+    public ByteBuffer constructMessage(int size, byte... args) {
+        return ByteBuffer.allocate(size).put(type).put(args);
     }
 
     public abstract void process(Server server, Player player, ByteBuffer buffer);

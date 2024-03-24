@@ -59,12 +59,22 @@ public class Server {
         client.read(buffer, null, new CompletionHandler<>() {
             @Override
             public void completed(Integer result, Object attachment) {
-                buffer.flip();
-                while (buffer.hasRemaining()) {
-                    processClientInput(client, buffer);
+                try {
+                    buffer.flip();
+                    while (buffer.hasRemaining()) {
+                        processClientInput(client, buffer);
+                    }
+                    // Accept another read
+                    readFromClient(client);
                 }
-                // Accept another read
-                readFromClient(client);
+                catch (Exception e) {
+                    try {
+                        System.out.println("Closed");
+                        client.close();
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }
             }
 
             @Override
@@ -78,7 +88,7 @@ public class Server {
 
     public void createPrivateLobby(Player player) {
         short code = getNextCode();
-        lobbies.put(code, new Lobby(this, player, code));
+        lobbies.put(code, new Lobby(this, player, code, true));
     }
 
     public synchronized Optional<String> joinPrivateLobby(Player player, short code) {
@@ -87,23 +97,25 @@ public class Server {
         return Optional.of(lobby.host.name);
     }
 
-    public synchronized void joinPublicMatch(Player player) {
+    public synchronized Optional<String> joinPublicMatch(Player player) {
         if (openLobby == null) {
             short code = availableCodes.iterator().next();
             availableCodes.remove(code);
-            openLobby = new Lobby(this, player, code);
+            openLobby = new Lobby(this, player, code, false);
             player.lobby = openLobby;
             player.isReady = true;
             System.out.println("found first player");
+            return Optional.empty();
         }
         else {
-            openLobby.add(player);
-            player.lobby = openLobby;
-            lobbies.put(openLobby.code, openLobby);
+            Lobby lobby = player.lobby = openLobby;
             player.isReady = true;
+            openLobby.add(player);
             openLobby.startGame();
+            lobbies.put(openLobby.code, openLobby);
             openLobby = null;
             System.out.println("found second player");
+            return Optional.of(lobby.host.name);
         }
     }
 
