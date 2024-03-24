@@ -23,29 +23,32 @@ public class Lobby implements Closeable {
 
     Server server;
     Game game;
-    Player host, guest;
+    public Player host;
+    Player guest;
     int turnOrder = INIT_RANDOM;
     int nextOrder = ALTERNATING;
     TimeSetting timeSetting = new TimeSetting(false, 180, 0);
+    public short code;
 
-
-    public Lobby(Server server, Player host) {
+    public Lobby(Server server, Player host, short code) {
         this.server = server;
+        this.code = code;
         add(host);
-        System.out.println("found first player");
     }
 
-
-    public void add(Player player) {
+    public boolean add(Player player) {
         if (host == null) {
             host = player;
             player.lobby = this;
+            return true;
         } else if (guest == null) {
             guest = player;
             player.lobby = this;
+            return true;
         }
 
         // If both aren't null, the player cannot join!
+        return false;
     }
 
     public void remove(Player player) throws IOException {
@@ -60,12 +63,10 @@ public class Lobby implements Closeable {
     }
 
     public void startGame() {
-
         // Don't start if there is not enough players
         if (host == null || guest == null || !host.isReady || !guest.isReady) return;
 
-        game = new Game();
-
+        game = new Game(host, guest);
         host.game = game;
         guest.game = game;
 
@@ -75,14 +76,13 @@ public class Lobby implements Closeable {
             case JOINING -> host.turn = 0;
             case INIT_RANDOM -> host.turn = rand.nextInt(2);
         }
-
         guest.turn = host.turn ^ 1;
 
-        game.turn = 1;
+        host.isReady = false;
+        guest.isReady = false;
     }
 
     public void updateSettingsAfterGame() {
-
         Random rand = new Random();
         switch (nextOrder) {
             case ALTERNATING -> turnOrder = turnOrder ^ 1;

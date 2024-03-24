@@ -3,7 +3,6 @@ package com.connect4multiplayer.connect4server;
 import com.connect4multiplayer.connect4server.lobbies.Lobby;
 
 import java.nio.channels.AsynchronousSocketChannel;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Optional;
 
@@ -16,6 +15,7 @@ public class Player {
     public boolean isReady = false;
 
     final LinkedList<Move> moves = new LinkedList<>();
+    public String name;
     int[] moveHeights = new int[7];
 
     public Player(AsynchronousSocketChannel client) {
@@ -23,6 +23,7 @@ public class Player {
     }
 
     public synchronized void enqueueMove(byte col) {
+        if (game == null) return;
         game.validateMove(col, this).ifPresent(move -> {
             moveHeights[col]++;
             moves.add(move);
@@ -37,7 +38,10 @@ public class Player {
     }
 
     public synchronized Optional<Move> playMove() {
+        System.out.println("Playing move");
+        if (game == null) return Optional.empty();
         if (game.turn != turn || moves.isEmpty() || game.getGameState() != Game.NOT_OVER) return Optional.empty();
+        System.out.println("here");
         Optional<Move> move = game.playMove(this);
         if (move.isEmpty()) clearMoveQueue();
         System.out.println("Rows " + game.getHeight(3));
@@ -50,6 +54,6 @@ public class Player {
     }
 
     public Player getOpponent() {
-        return turn == 0 ? game.player1 : game.player2;
+        return turn == 0 ? game.host : game.guest;
     }
 }

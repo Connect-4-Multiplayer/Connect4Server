@@ -6,23 +6,17 @@ import com.connect4multiplayer.connect4server.Server;
 import java.nio.ByteBuffer;
 
 public abstract class Message {
-    static final byte MATCH_MAKING = 0;
+    static final byte LOBBY_JOIN = 0;
     static final byte MOVE = 1;
-    static final byte LOBBY_JOIN = 2;
-    static final byte GAME_START = 3;
+    static final byte SET_READY = 2;
 
     byte type;
 
-    public Message(byte type) {
-        this.type = type;
-    }
-
     public static Message of(byte type) {
         return switch (type) {
-            case MATCH_MAKING -> new MatchMaking(type);
-            case MOVE -> new Move(type);
-            case LOBBY_JOIN -> new LobbyJoin(type);
-            case GAME_START -> new GameStart(type);
+            case LOBBY_JOIN -> new LobbyJoin();
+            case MOVE -> new MoveMessage();
+            case SET_READY -> new SetReady();
             default -> null;
         };
     }

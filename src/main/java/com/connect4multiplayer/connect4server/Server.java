@@ -9,21 +9,22 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Server {
 
     private final AsynchronousServerSocketChannel serverSock;
-    private final HashMap<AsynchronousSocketChannel, Player> players = new HashMap<>();
+    private final ConcurrentHashMap<AsynchronousSocketChannel, Player> players = new ConcurrentHashMap<>();
 
     private static final int INPUT_BYTES = 1024;
 
-    private final ArrayList<Lobby> lobbies = new ArrayList<>();
-    private Player waitingPlayer = null;
-    public Lobby openLobby = null;
-
-    static int moves;
+    public final ConcurrentHashMap<Short, Lobby> lobbies = new ConcurrentHashMap<>();
+    private final Set<Short> availableCodes = Collections.synchronizedSet(new HashSet<>());
+    private Lobby openLobby = null;
 
     public Server() throws IOException {
         serverSock = AsynchronousServerSocketChannel.open();
@@ -31,6 +32,9 @@ public class Server {
         InetSocketAddress addr = new InetSocketAddress(PORT);
         serverSock.bind(addr);
         establishClientConnection();
+        for (short i = Short.MIN_VALUE; i < Short.MAX_VALUE; i++) {
+            availableCodes.add(i);
+        }
     }
 
     private void establishClientConnection() {
@@ -48,32 +52,6 @@ public class Server {
                 System.out.println("failed");
             }
         });
-
-    }
-
-    public void removeLobby(Lobby lobby) {
-        lobbies.remove(lobby);
-    }
-
-    private void startMatchmaking(AsynchronousSocketChannel client) {
-        if (waitingPlayer != null) {
-            Player opponent = waitingPlayer;
-            Game game = opponent.game;
-            Player player = players.get(client);
-            player.turn = 0;
-            player.game = game;
-            game.player2 = player;
-            game.turn = 1;
-            System.out.println("found second player");
-            waitingPlayer = null;
-        }
-        else {
-            Game game = new Game();
-            game.player1 = players.get(client);
-            game.player1.game = game;
-            waitingPlayer = game.player1;
-            System.out.println("found first player");
-        }
     }
 
     private synchronized void readFromClient(AsynchronousSocketChannel client) {
@@ -95,37 +73,49 @@ public class Server {
     }
 
     private synchronized void processClientInput(AsynchronousSocketChannel client, ByteBuffer buffer) {
-        Player player = players.get(client);
-        byte reqNum = buffer.get();
-        if (Messages.MOVE.hasRequestNum(reqNum)) {
-            Message message = Message.of(reqNum);
-            message.process(this, player, buffer);
-            return;
-        }
+        Message.of(buffer.get()).process(this, players.get(client), buffer);
+    }
 
-        if (Messages.FIND_OPPONENT.hasRequestNum(reqNum)){
-            startMatchmaking(client);
-            return;
-        }
+    public void createPrivateLobby(Player player) {
+        short code = getNextCode();
+        lobbies.put(code, new Lobby(this, player, code));
+    }
 
-        if (Messages.LOBBY_CREATE.hasRequestNum(reqNum)) {
-            Lobby lobby = new Lobby(this, player);
-            player.lobby = lobby;
-            lobbies.add(lobby);
-            return;
-        }
+    public synchronized Optional<String> joinPrivateLobby(Player player, short code) {
+        Lobby lobby = lobbies.get(code);
+        if (lobby == null || !lobby.add(player)) return Optional.empty();
+        return Optional.of(lobby.host.name);
+    }
 
-        if (Messages.LOBBY_JOIN.hasRequestNum(reqNum)) {
-            // TODO prevent people from joining after full
-            int id = buffer.getInt();
-            Lobby lobby = lobbies.get(id);
-            lobby.add(player);
-            return;
+    public synchronized void joinPublicMatch(Player player) {
+        if (openLobby == null) {
+            short code = availableCodes.iterator().next();
+            availableCodes.remove(code);
+            openLobby = new Lobby(this, player, code);
+            player.lobby = openLobby;
+            player.isReady = true;
+            System.out.println("found first player");
         }
+        else {
+            openLobby.add(player);
+            player.lobby = openLobby;
+            lobbies.put(openLobby.code, openLobby);
+            player.isReady = true;
+            openLobby.startGame();
+            openLobby = null;
+            System.out.println("found second player");
+        }
+    }
 
-        if (Messages.LOBBY_START.hasRequestNum(reqNum)) {
-            player.lobby.startGame();
-        }
+    private short getNextCode() {
+        short code = availableCodes.iterator().next();
+        availableCodes.remove(code);
+        return code;
+    }
+
+    public synchronized void removeLobby(Lobby lobby) {
+        lobbies.remove(lobby.code);
+        availableCodes.add(lobby.code);
     }
 
 }

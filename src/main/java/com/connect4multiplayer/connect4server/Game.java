@@ -1,7 +1,5 @@
 package com.connect4multiplayer.connect4server;
 
-import com.connect4multiplayer.connect4server.lobbies.Lobby;
-
 import java.util.Optional;
 
 import static com.connect4multiplayer.connect4server.Engine.*;
@@ -21,7 +19,7 @@ public class Game {
     /**
      * The current turn in the game
      */
-    public int turn = -1;
+    public int turn = 1;
     /**
      * Number of moves made
      */
@@ -31,7 +29,12 @@ public class Game {
      */
     public long state;
 
-    public Player player1, player2;
+    public Player host, guest;
+
+    public Game(Player host, Player guest) {
+        this.host = host;
+        this.guest = guest;
+    }
 
     public synchronized Optional<Move> validateMove(byte col, Player player) {
         int height = getHeight(col) + player.moveHeights[col];
