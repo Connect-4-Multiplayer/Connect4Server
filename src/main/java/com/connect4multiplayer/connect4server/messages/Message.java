@@ -21,6 +21,12 @@ public abstract class Message {
         };
     }
 
+    /**
+     * Creates a reply based on the message
+     * @param size The size of the reply to be allocated
+     * @param args The bytes to send. Must be smaller than the size of the reply to be constructed
+     * @throws IllegalArgumentException when the size is greater than the size of the request
+     */
     public ByteBuffer constructReply(int size, byte... args) {
         return ByteBuffer.allocate(size)
                 .put(type)

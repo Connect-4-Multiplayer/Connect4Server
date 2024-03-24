@@ -21,13 +21,13 @@ public class Lobby implements Closeable {
     private static final byte RANDOM = 2;
 
 
-    Server server;
-    Game game;
+    public Server server;
+    public Game game;
     public Player host;
-    Player guest;
-    int turnOrder = INIT_RANDOM;
-    int nextOrder = ALTERNATING;
-    TimeSetting timeSetting = new TimeSetting(false, 180, 0);
+    public Player guest;
+    public byte turnOrder = INIT_RANDOM;
+    public byte nextOrder = ALTERNATING;
+    public TimeSetting timeSetting = new TimeSetting(false, 180, 0);
     public short code;
 
     public Lobby(Server server, Player host, short code) {
@@ -63,7 +63,7 @@ public class Lobby implements Closeable {
     }
 
     public void startGame() {
-        // Don't start if there is not enough players
+        // Don't start if there is not enough players or if players are not ready
         if (host == null || guest == null || !host.isReady || !guest.isReady) return;
 
         game = new Game(host, guest);
@@ -81,17 +81,16 @@ public class Lobby implements Closeable {
         host.isReady = false;
         guest.isReady = false;
     }
-
     public void updateSettingsAfterGame() {
         Random rand = new Random();
         switch (nextOrder) {
-            case ALTERNATING -> turnOrder = turnOrder ^ 1;
-            case RANDOM -> turnOrder = rand.nextInt(2) ;
+            case ALTERNATING -> turnOrder = (byte) (turnOrder ^ 1);
+            case RANDOM -> turnOrder = (byte) rand.nextInt(2);
         }
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         server.removeLobby(this);
     }
 }

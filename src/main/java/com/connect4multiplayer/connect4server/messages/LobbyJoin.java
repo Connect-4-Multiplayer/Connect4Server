@@ -8,10 +8,10 @@ import java.nio.charset.StandardCharsets;
 
 public class LobbyJoin extends Message {
 
-    private final byte FAIL = 0;
-    private final byte SUCCESS = 1;
-    private final int FAILURE_MESSAGE_SIZE = 2;
-    private final int SUCCESS_MESSAGE_SIZE = 66;
+    private static final byte FAIL = 0;
+    private static final byte SUCCESS = 1;
+    private static final int FAILURE_MESSAGE_SIZE = 2;
+    private static final int SUCCESS_MESSAGE_SIZE = 66;
 
     public LobbyJoin() {
         this.type = LOBBY_JOIN;
@@ -19,6 +19,9 @@ public class LobbyJoin extends Message {
 
     @Override
     public void process(Server server, Player player, ByteBuffer buffer) {
+        // Reserved values used as markers for creating private or joining public lobbies
+        // We use these for padding, to maintain consistency of the size of the messages.
+        // The client may also send the private lobby number, which is a short. Having a single byte be sent instead would cause issues
         final short CREATE_PRIVATE = Short.MIN_VALUE;
         final short JOIN_PUBLIC = Short.MAX_VALUE;
 
