@@ -21,6 +21,7 @@ public class Server {
 
     private final ArrayList<Lobby> lobbies = new ArrayList<>();
     private Player waitingPlayer = null;
+    public Lobby openLobby = null;
 
     static int moves;
 
@@ -96,13 +97,11 @@ public class Server {
     private synchronized void processClientInput(AsynchronousSocketChannel client, ByteBuffer buffer) {
         Player player = players.get(client);
         byte reqNum = buffer.get();
-        Message message = Message.of(reqNum);
-        message.process(this, player, buffer);
-//        if (Message.MOVE.hasRequestNum(reqNum)) {
-//            player.enqueueMove(buffer.get());
-//            handleMove(player);
-//            return;
-//        }
+        if (Messages.MOVE.hasRequestNum(reqNum)) {
+            Message message = Message.of(reqNum);
+            message.process(this, player, buffer);
+            return;
+        }
 
         if (Messages.FIND_OPPONENT.hasRequestNum(reqNum)){
             startMatchmaking(client);

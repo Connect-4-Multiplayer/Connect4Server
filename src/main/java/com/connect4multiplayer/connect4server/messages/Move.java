@@ -7,8 +7,8 @@ import com.connect4multiplayer.connect4server.Server;
 import java.nio.ByteBuffer;
 
 public class Move extends Message {
-    public Move() {
-
+    public Move(byte type) {
+        super(type);
     }
 
     @Override

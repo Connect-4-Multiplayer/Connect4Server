@@ -13,12 +13,16 @@ public abstract class Message {
 
     byte type;
 
+    public Message(byte type) {
+        this.type = type;
+    }
+
     public static Message of(byte type) {
         return switch (type) {
-            case MATCH_MAKING -> new MatchMaking();
-            case MOVE -> new Move();
-            case LOBBY_JOIN -> new LobbyJoin();
-            default -> new GameStart();
+            case MATCH_MAKING -> new MatchMaking(type);
+            case MOVE -> new Move(type);
+            case LOBBY_JOIN -> new LobbyJoin(type);
+            default -> new GameStart(type);
         };
     }
 
