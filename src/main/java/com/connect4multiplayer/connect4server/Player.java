@@ -13,10 +13,9 @@ public class Player {
     public Lobby lobby;
     public Game game;
 
-    public boolean isHost = false;
+    public boolean isReady = false;
 
     final LinkedList<Move> moves = new LinkedList<>();
-    final ArrayList<Integer> deltaMinimaxValues = new ArrayList<>();
     int[] moveHeights = new int[7];
 
     public Player(AsynchronousSocketChannel client) {

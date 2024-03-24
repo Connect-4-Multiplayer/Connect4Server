@@ -10,10 +10,6 @@ import java.util.Random;
 
 public class Lobby implements Closeable {
 
-    Server server;
-    Game game;
-    Player first, second;
-
     // Turn orders
     private static final byte HOST = 0;
     private static final byte JOINING = 1;
@@ -25,8 +21,10 @@ public class Lobby implements Closeable {
     private static final byte RANDOM = 2;
 
 
+    Server server;
+    Game game;
+    Player host, guest;
     int turnOrder = INIT_RANDOM;
-
     int nextOrder = ALTERNATING;
     TimeSetting timeSetting = new TimeSetting(false, 180, 0);
 
@@ -34,17 +32,16 @@ public class Lobby implements Closeable {
     public Lobby(Server server, Player host) {
         this.server = server;
         add(host);
-        host.isHost = true;
         System.out.println("found first player");
     }
 
 
     public void add(Player player) {
-        if (first == null) {
-            first = player;
+        if (host == null) {
+            host = player;
             player.lobby = this;
-        } else if (second == null) {
-            second = player;
+        } else if (guest == null) {
+            guest = player;
             player.lobby = this;
         }
 
@@ -52,46 +49,34 @@ public class Lobby implements Closeable {
     }
 
     public void remove(Player player) throws IOException {
-        if (first.equals(player)) {
-            first = null;
-        } else if (second.equals(player)) {
-            second = null;
+        if (host.equals(player)) {
+            host = guest;
         }
-
+        guest = null;
         // Lobby is disbanded if nobody is in it
-        if (first == null && second == null) {
+        if (host == null) {
             this.close();
         }
-    }
-
-    private Player host() {
-        // TODO might be buggy if second is also not in the lobby due to concurrency
-        return first.isHost ? first : second;
-    }
-
-    private Player joining() {
-        // TODO might be buggy if second is also not in the lobby due to concurrency
-        return !first.isHost ? first : second;
     }
 
     public void startGame() {
 
         // Don't start if there is not enough players
-        if (first == null || second == null) return;
+        if (host == null || guest == null || !host.isReady || !guest.isReady) return;
 
         game = new Game();
 
-        first.game = game;
-        second.game = game;
+        host.game = game;
+        guest.game = game;
 
         Random rand = new Random();
         switch (turnOrder) {
-            case HOST -> host().turn = 1;
-            case JOINING -> host().turn = 0;
-            case INIT_RANDOM -> host().turn = rand.nextInt(2);
+            case HOST -> host.turn = 1;
+            case JOINING -> host.turn = 0;
+            case INIT_RANDOM -> host.turn = rand.nextInt(2);
         }
 
-        joining().turn = host().turn ^ 1;
+        guest.turn = host.turn ^ 1;
 
         game.turn = 1;
     }

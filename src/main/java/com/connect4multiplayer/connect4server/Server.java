@@ -1,6 +1,7 @@
 package com.connect4multiplayer.connect4server;
 
 import com.connect4multiplayer.connect4server.lobbies.Lobby;
+import com.connect4multiplayer.connect4server.messages.Message;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -10,7 +11,6 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.CompletableFuture;
 
 public class Server {
 
@@ -95,71 +95,38 @@ public class Server {
 
     private synchronized void processClientInput(AsynchronousSocketChannel client, ByteBuffer buffer) {
         Player player = players.get(client);
-        int reqNum = buffer.get();
-        if (Message.MOVE.hasRequestNum(reqNum)) {
-            player.enqueueMove(buffer.get());
-            handleMove(player);
-            return;
-        }
+        byte reqNum = buffer.get();
+        Message message = Message.of(reqNum);
+        message.process(this, player, buffer);
+//        if (Message.MOVE.hasRequestNum(reqNum)) {
+//            player.enqueueMove(buffer.get());
+//            handleMove(player);
+//            return;
+//        }
 
-        if (Message.FIND_OPPONENT.hasRequestNum(reqNum)){
+        if (Messages.FIND_OPPONENT.hasRequestNum(reqNum)){
             startMatchmaking(client);
             return;
         }
 
-        if (Message.LOBBY.hasRequestNum(reqNum)) {
+        if (Messages.LOBBY_CREATE.hasRequestNum(reqNum)) {
             Lobby lobby = new Lobby(this, player);
             player.lobby = lobby;
             lobbies.add(lobby);
             return;
         }
 
-        if (Message.LOBBY_JOIN.hasRequestNum(reqNum)) {
+        if (Messages.LOBBY_JOIN.hasRequestNum(reqNum)) {
             // TODO prevent people from joining after full
             int id = buffer.getInt();
             Lobby lobby = lobbies.get(id);
             lobby.add(player);
-            player.lobby = lobby;
             return;
         }
 
-        if (Message.LOBBY_START.hasRequestNum(reqNum)) {
-
-            if (player.isHost) {
-
-            }
+        if (Messages.LOBBY_START.hasRequestNum(reqNum)) {
+            player.lobby.startGame();
         }
-    }
-
-
-    private void handleMove(Player player) {
-        player.playMove().ifPresent(move -> {
-            sendMoveToClients(move, player.game);
-            handleMove(player.getOpponent());
-        });
-    }
-
-    private CompletableFuture<Move> sendMoveToClients(Move move, Game game) {
-        moves++;
-        CompletableFuture<Move> moveFuture = new CompletableFuture<>();
-        ByteBuffer buffer = Message.MOVE.constructReply(7, move.col(), move.height(), move.player());
-        ByteBuffer buffer1 = Message.MOVE.constructReply(7, move.col(), move.height(), move.player());
-        byte gameState = game.getGameState();
-        if (gameState != Game.WIN) {
-            buffer.put(gameState).putShort((short) 0);
-            buffer1.put(gameState).putShort((short) 0);
-            game.player1.client.write(buffer.flip());
-            game.player2.client.write(buffer1.flip());
-        }
-        else {
-            byte winner = (byte) game.turn;
-            buffer.put(winner).put(game.getWinningSpots());
-            game.player1.client.write(buffer.flip());
-            // Flips winner bit since the other player has a victory when the first has a loss and vice versa
-            buffer.put(4, (byte) (winner ^ 1));
-            game.player2.client.write(buffer.flip());
-        }
-        return moveFuture;
     }
 
 }

@@ -10,8 +10,6 @@ import static com.connect4multiplayer.connect4server.Engine.*;
  * Keeps track of the current state of the game
  */
 public class Game {
-
-
     /**
      * Number of spots on the board
      */
@@ -19,7 +17,7 @@ public class Game {
     /**
      * Represents the result of the game
      */
-    static final byte WIN = 0, DRAW = 2, NOT_OVER = 3;
+    public static final byte WIN = 0, DRAW = 2, NOT_OVER = 3;
     /**
      * The current turn in the game
      */
