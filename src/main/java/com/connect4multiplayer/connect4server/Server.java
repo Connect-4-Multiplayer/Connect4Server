@@ -1,6 +1,5 @@
 package com.connect4multiplayer.connect4server;
 
-import com.connect4multiplayer.connect4server.lobbies.Lobby;
 import com.connect4multiplayer.connect4server.messages.Message;
 
 import java.io.IOException;
@@ -88,20 +87,20 @@ public class Server {
 
     public void createPrivateLobby(Player player) {
         short code = getNextCode();
-        lobbies.put(code, new Lobby(this, player, code, true));
+        lobbies.put(code, new Lobby(this, player, code, false));
     }
 
-    public synchronized Optional<String> joinPrivateLobby(Player player, short code) {
+    public synchronized Optional<Lobby> joinPrivateLobby(Player player, short code) {
         Lobby lobby = lobbies.get(code);
         if (lobby == null || !lobby.add(player)) return Optional.empty();
-        return Optional.of(lobby.host.name);
+        return Optional.of(lobby);
     }
 
-    public synchronized Optional<String> joinPublicMatch(Player player) {
+    public synchronized Optional<Lobby> joinPublicMatch(Player player) {
         if (openLobby == null) {
             short code = availableCodes.iterator().next();
             availableCodes.remove(code);
-            openLobby = new Lobby(this, player, code, false);
+            openLobby = new Lobby(this, player, code, true);
             player.lobby = openLobby;
             player.isReady = true;
             System.out.println("found first player");
@@ -115,7 +114,7 @@ public class Server {
             lobbies.put(openLobby.code, openLobby);
             openLobby = null;
             System.out.println("found second player");
-            return Optional.of(lobby.host.name);
+            return Optional.of(lobby);
         }
     }
 

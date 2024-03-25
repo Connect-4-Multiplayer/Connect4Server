@@ -1,7 +1,5 @@
 package com.connect4multiplayer.connect4server;
 
-import com.connect4multiplayer.connect4server.lobbies.Lobby;
-
 import java.nio.channels.AsynchronousSocketChannel;
 import java.util.LinkedList;
 import java.util.Optional;
@@ -16,7 +14,7 @@ public class Player {
     public boolean isHost;
 
     final LinkedList<Move> moves = new LinkedList<>();
-    public String name;
+    public byte[] name;
     int[] moveHeights = new int[7];
 
     public Player(AsynchronousSocketChannel client) {
@@ -40,7 +38,7 @@ public class Player {
 
     public synchronized Optional<Move> playMove() {
         if (game == null) return Optional.empty();
-        if (game.turn != turn || moves.isEmpty() || game.getGameState() != Game.NOT_OVER) return Optional.empty();
+        if (game.turn != turn || moves.isEmpty() || game.gameState != Game.NOT_OVER) return Optional.empty();
         Optional<Move> move = game.playMove(this);
         if (move.isEmpty()) clearMoveQueue();
         return move;

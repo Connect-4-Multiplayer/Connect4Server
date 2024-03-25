@@ -2,15 +2,18 @@ package com.connect4multiplayer.connect4server.messages;
 
 import com.connect4multiplayer.connect4server.Player;
 import com.connect4multiplayer.connect4server.Server;
-import com.connect4multiplayer.connect4server.lobbies.Lobby;
+import com.connect4multiplayer.connect4server.Lobby;
 
 import java.nio.ByteBuffer;
 
 public class SetSetting extends Message {
 
     private static final byte TURN_ORDER = 0;
-
     private static final byte NEXT_ORDER = 1;
+    private static final byte START_TIME = 2;
+    private static final byte INCREMENT = 3;
+    private static final byte IS_UNLIMITED = 4;
+
     @Override
     public void process(Server server, Player player, ByteBuffer buffer) {
 
@@ -34,6 +37,9 @@ public class SetSetting extends Message {
         switch (settingId) {
             case TURN_ORDER -> lobby.turnOrder = settingVal;
             case NEXT_ORDER -> lobby.nextOrder = settingVal;
+            case START_TIME -> lobby.startTime = (short) ((settingVal << 8) + buffer.get());
+            case INCREMENT -> lobby.increment = settingVal;
+            case IS_UNLIMITED -> lobby.isUnlimited = settingVal;
         }
     }
 }

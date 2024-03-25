@@ -8,7 +8,8 @@ import java.nio.ByteBuffer;
 public abstract class Message {
     static final byte LOBBY_JOIN = 0;
     static final byte MOVE = 1;
-    static final byte SET_READY = 2;
+    static final byte PLAYER_SELECTION = 2;
+    static final byte SET_SETTING = 3;
 
     byte type;
 
@@ -16,7 +17,8 @@ public abstract class Message {
         return switch (type) {
             case LOBBY_JOIN -> new LobbyJoin();
             case MOVE -> new MoveMessage();
-            case SET_READY -> new SetReady();
+            case PLAYER_SELECTION -> new PlayerSelection();
+            case SET_SETTING -> new SetSetting();
             default -> null;
         };
     }

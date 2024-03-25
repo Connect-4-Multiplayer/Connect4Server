@@ -1,4 +1,4 @@
-package com.connect4multiplayer.connect4server.lobbies;
+package com.connect4multiplayer.connect4server;
 
 import com.connect4multiplayer.connect4server.Game;
 import com.connect4multiplayer.connect4server.Server;
@@ -6,6 +6,7 @@ import com.connect4multiplayer.connect4server.Player;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
 public class Lobby implements Closeable {
@@ -27,17 +28,17 @@ public class Lobby implements Closeable {
     public Player guest;
     public short code;
     
-    public final byte isPrivate;
+    public final byte isPublic;
     public int turnOrder = INIT_RANDOM;
     public int nextOrder = ALTERNATING;
-    short startTime = 180;
-    byte increment = 0;
-    byte isUnlimited = 0;
+    public short startTime = 180;
+    public byte increment = 0;
+    public byte isUnlimited = 0;
 
-    public Lobby(Server server, Player host, short code, boolean isPrivate) {
+    public Lobby(Server server, Player host, short code, boolean isPublic) {
         this.server = server;
         this.code = code;
-        this.isPrivate = (byte) (isPrivate ? 1 : 0);
+        this.isPublic = (byte) (isPublic ? 1 : 0);
         add(host);
     }
 
@@ -96,23 +97,13 @@ public class Lobby implements Closeable {
         }
     }
 
+    public byte[] getSettings() {
+        return new byte[]{isPublic, (byte) turnOrder, (byte) nextOrder,
+                isUnlimited, increment, (byte) (startTime >> 8), (byte) startTime};
+    }
+
     @Override
     public void close() throws IOException {
         server.removeLobby(this);
-    }
-
-    public byte[] getSettings() {
-        final int size = 134;
-        byte[] settings = new byte[size];
-        return new byte[]{isPrivate, (byte) turnOrder, (byte) nextOrder, 
-                isUnlimited, increment, (byte) (startTime >> 8), (byte) startTime};
-    }
-    
-    public void setSettings(byte turnOrder, byte nextOrder, byte isUnlimited, byte increment, short startTime) {
-        this.turnOrder = turnOrder;
-        this.nextOrder = nextOrder;
-        this.isUnlimited = isUnlimited;
-        this.increment = increment;
-        this.startTime = startTime;
     }
 }

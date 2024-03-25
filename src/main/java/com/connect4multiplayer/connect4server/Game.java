@@ -28,6 +28,7 @@ public class Game {
      * The current state of the game board
      */
     public long state;
+    public int gameState = NOT_OVER;
 
     public Player host, guest;
 
@@ -54,6 +55,7 @@ public class Game {
         // Flips the turn
         turn ^= 1;
         movesMade++;
+        gameState = getGameState();
         return Optional.of(new Move(move.col(), (byte) height, move.player()));
     }
 
