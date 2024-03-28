@@ -22,7 +22,10 @@ public class PlayerSelection extends Message {
                 while (buffer.hasRemaining()) name[i++] = buffer.get();
                 player.name = name;
             }
-            case SET_READY -> player.isReady = true;
+            case SET_READY -> {
+                player.isReady = true;
+                player.lobby.startGame();
+            }
         }
     }
 }

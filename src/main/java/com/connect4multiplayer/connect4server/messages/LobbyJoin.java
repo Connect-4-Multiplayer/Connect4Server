@@ -24,18 +24,15 @@ public class LobbyJoin extends Message {
         // The client may also send the private lobby number, which is a short. Having a single byte be sent instead would cause issues
         final short CREATE_PRIVATE = Short.MIN_VALUE;
         final short JOIN_PUBLIC = Short.MAX_VALUE;
-
+        System.out.println("got join");
         short code = buffer.getShort();
+        System.out.println("CODE: " + code);
         switch (code) {
-            case JOIN_PUBLIC -> {
-                server.joinPublicMatch(player).ifPresentOrElse(this::sendSettingsToGuest,
-                        () -> sendReply(player, NOT_FOUND, PUBLIC));
-            }
-            case CREATE_PRIVATE -> {
-                server.createPrivateLobby(player);
-                sendReply(player, CREATED, PRIVATE);
-            }
-            default -> server.joinPrivateLobby(player, code).ifPresentOrElse(this::sendSettingsToGuest,
+            case CREATE_PRIVATE -> player.client.write(constructMessage(4, CREATED)
+                    .putShort(server.createPrivateLobby(player)).flip());
+            case JOIN_PUBLIC -> server.joinPublicMatch(player).ifPresentOrElse(this::sendLobbyInfo,
+                    () -> sendReply(player, NOT_FOUND, PUBLIC));
+            default -> server.joinPrivateLobby(player, code).ifPresentOrElse(this::sendLobbyInfo,
                     () -> sendReply(player, NOT_FOUND, PRIVATE));
         }
     }
@@ -44,9 +41,9 @@ public class LobbyJoin extends Message {
         player.client.write(constructMessage(REPLY_SIZE, code, lobbyType).flip());
     }
 
-    private void sendSettingsToGuest(Lobby lobby) {
-        int SETTINGS_SIZE = 74;
-        lobby.guest.client.write(constructMessage(SETTINGS_SIZE, FOUND, lobby.isPublic)
+    private void sendLobbyInfo(Lobby lobby) {
+        int SIZE = 74;
+        lobby.guest.client.write(constructMessage(SIZE, FOUND, lobby.isPublic)
                 .put(lobby.getSettings())
                 .put(lobby.host.name).flip());
     }

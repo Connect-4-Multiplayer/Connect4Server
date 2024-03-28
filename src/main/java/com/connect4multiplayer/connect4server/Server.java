@@ -58,8 +58,17 @@ public class Server {
         client.read(buffer, null, new CompletionHandler<>() {
             @Override
             public void completed(Integer result, Object attachment) {
+                if (result == -1) {
+                    try {
+                        client.close();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                System.out.println("Recieved");
                 try {
                     buffer.flip();
+                    System.out.println(buffer.remaining());
                     while (buffer.hasRemaining()) {
                         processClientInput(client, buffer);
                     }
@@ -85,9 +94,10 @@ public class Server {
         Message.of(buffer.get()).process(this, players.get(client), buffer);
     }
 
-    public void createPrivateLobby(Player player) {
+    public short createPrivateLobby(Player player) {
         short code = getNextCode();
         lobbies.put(code, new Lobby(this, player, code, false));
+        return code;
     }
 
     public synchronized Optional<Lobby> joinPrivateLobby(Player player, short code) {

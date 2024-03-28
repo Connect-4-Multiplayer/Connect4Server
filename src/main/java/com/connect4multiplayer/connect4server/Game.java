@@ -39,7 +39,7 @@ public class Game {
 
     public synchronized Optional<Move> validateMove(byte col, Player player) {
         int height = getHeight(col) + player.moveHeights[col];
-        if (height >= 6 || getGameState() != NOT_OVER) return Optional.empty();
+        if (height >= 6 || gameState != NOT_OVER) return Optional.empty();
         // We allow moves to be sent here because of pre moves
         return Optional.of(new Move(col, (byte) height, (byte) player.turn));
     }
@@ -73,9 +73,7 @@ public class Game {
      * @return Integer representing the result of the game
      */
     public byte getGameState() {
-        if (isWin(state, turn ^ 1)) {
-            return WIN;
-        }
+        if (isWin(state, turn ^ 1)) return WIN;
         if (movesMade == SPOTS) return DRAW;
         return NOT_OVER;
     }
