@@ -9,7 +9,6 @@ import java.nio.ByteBuffer;
 public class LobbyJoin extends Message {
 
     private static final byte NOT_FOUND = 0, FOUND = 1, CREATED = 2;
-//    private static final byte SUCCESS = 1;
     private static final int REPLY_SIZE = 3;
     private static final byte PRIVATE = 0, PUBLIC = 1;
 
@@ -28,17 +27,20 @@ public class LobbyJoin extends Message {
         short code = buffer.getShort();
         System.out.println("CODE: " + code);
         switch (code) {
-            case CREATE_PRIVATE -> player.client.write(constructMessage(4, CREATED)
-                    .putShort(server.createPrivateLobby(player)).flip());
+            case CREATE_PRIVATE -> {
+                player.client.write(constructMessage(4, CREATED)
+                        .putShort(server.createPrivateLobby(player)).flip());
+                System.out.println("Sent lobby code");
+            }
             case JOIN_PUBLIC -> server.joinPublicMatch(player).ifPresentOrElse(this::sendLobbyInfo,
-                    () -> sendReply(player, NOT_FOUND, PUBLIC));
+                    () -> sendOpponentNotFoundReply(player, PUBLIC));
             default -> server.joinPrivateLobby(player, code).ifPresentOrElse(this::sendLobbyInfo,
-                    () -> sendReply(player, NOT_FOUND, PRIVATE));
+                    () -> sendOpponentNotFoundReply(player, PRIVATE));
         }
     }
 
-    private void sendReply(Player player, byte code, byte lobbyType) {
-        player.client.write(constructMessage(REPLY_SIZE, code, lobbyType).flip());
+    private void sendOpponentNotFoundReply(Player player, byte lobbyType) {
+        player.client.write(constructMessage(REPLY_SIZE, NOT_FOUND, lobbyType).flip());
     }
 
     private void sendLobbyInfo(Lobby lobby) {

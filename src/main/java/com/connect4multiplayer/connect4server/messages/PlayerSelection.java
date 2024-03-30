@@ -6,7 +6,8 @@ import com.connect4multiplayer.connect4server.Server;
 import java.nio.ByteBuffer;
 
 public class PlayerSelection extends Message {
-    final byte NAME = 0, SET_READY = 1;
+    static final byte NAME = 0, SET_READY = 1;
+    static final int MAX_NAME_LENGTH = 64;
 
     public PlayerSelection() {
         type = PLAYER_SELECTION;
@@ -14,13 +15,16 @@ public class PlayerSelection extends Message {
 
     @Override
     public void process(Server server, Player player, ByteBuffer buffer) {
+        System.out.println("Player selection");
         byte selection = buffer.get();
         switch (selection) {
             case NAME -> {
-                byte[] name = new byte[64];
-                int i = 0;
-                while (buffer.hasRemaining()) name[i++] = buffer.get();
+                // TODO: fix buffer underflow
+                byte[] name = new byte[MAX_NAME_LENGTH];
+                buffer.get(name);
                 player.name = name;
+                System.out.println("Player selection");
+                player.getOpponent().client.write(constructMessage(NAME).put(name).flip());
             }
             case SET_READY -> {
                 player.isReady = true;

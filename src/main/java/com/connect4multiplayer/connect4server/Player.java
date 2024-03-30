@@ -1,6 +1,7 @@
 package com.connect4multiplayer.connect4server;
 
 import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.Optional;
 
@@ -14,7 +15,7 @@ public class Player {
     public boolean isHost;
 
     final LinkedList<Move> moves = new LinkedList<>();
-    public byte[] name = new byte[64];
+    public byte[] name = "Player                          ".getBytes(StandardCharsets.UTF_16BE);
     int[] moveHeights = new int[7];
 
     public Player(AsynchronousSocketChannel client) {
@@ -50,6 +51,6 @@ public class Player {
     }
 
     public Player getOpponent() {
-        return turn == 0 ? game.host : game.guest;
+        return isHost ? lobby.guest : lobby.host;
     }
 }

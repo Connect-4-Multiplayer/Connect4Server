@@ -17,10 +17,9 @@ public class Lobby implements Closeable {
     private static final byte INIT_RANDOM = 2;
 
     // Next orders
-    private static final byte STAY = 0;
-    private static final byte ALTERNATING = 1;
-    private static final byte RANDOM = 2;
-
+    private static final byte ALTERNATING = 0;
+    private static final byte RANDOM = 1;
+    private static final byte STAY = 2;
 
     public Server server;
     public Game game;
@@ -67,6 +66,10 @@ public class Lobby implements Closeable {
         if (host == null) {
             this.close();
         }
+    }
+
+    public Player getOpponent(Player player) {
+       return player == host ? guest : host;
     }
 
     public void startGame() {
