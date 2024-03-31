@@ -23,14 +23,12 @@ public class LobbyJoin extends Message {
         // The client may also send the private lobby number, which is a short. Having a single byte be sent instead would cause issues
         final short CREATE_PRIVATE = Short.MIN_VALUE;
         final short JOIN_PUBLIC = Short.MAX_VALUE;
-        System.out.println("got join");
         short code = buffer.getShort();
-        System.out.println("CODE: " + code);
         switch (code) {
             case CREATE_PRIVATE -> {
                 player.client.write(constructMessage(4, CREATED)
                         .putShort(server.createPrivateLobby(player)).flip());
-                System.out.println("Sent lobby code");
+
             }
             case JOIN_PUBLIC -> server.joinPublicMatch(player).ifPresentOrElse(this::sendLobbyInfo,
                     () -> sendOpponentNotFoundReply(player, PUBLIC));
