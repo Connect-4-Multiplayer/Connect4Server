@@ -15,7 +15,7 @@ public class Player {
     public boolean isHost;
 
     final LinkedList<Move> moves = new LinkedList<>();
-    public byte[] name = "Player                          ".getBytes(StandardCharsets.UTF_16BE);
+    public byte[] name = new byte[64];
     int[] moveHeights = new int[7];
 
     public Player(AsynchronousSocketChannel client) {

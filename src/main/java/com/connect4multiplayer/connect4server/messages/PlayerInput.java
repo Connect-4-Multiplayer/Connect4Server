@@ -6,12 +6,12 @@ import com.connect4multiplayer.connect4server.Server;
 
 import java.nio.ByteBuffer;
 
-public class PlayerSelection extends Message {
+public class PlayerInput extends Message {
     static final byte NAME = 0, TOGGLE_READY = 1;
     static final int MAX_NAME_LENGTH = 64;
 
-    public PlayerSelection() {
-        type = PLAYER_SELECTION;
+    public PlayerInput() {
+        type = PLAYER_INPUT;
     }
 
     @Override

@@ -1,12 +1,7 @@
 package com.connect4multiplayer.connect4server;
 
-import com.connect4multiplayer.connect4server.Game;
-import com.connect4multiplayer.connect4server.Server;
-import com.connect4multiplayer.connect4server.Player;
-
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
 public class Lobby implements Closeable {
@@ -68,10 +63,6 @@ public class Lobby implements Closeable {
         }
     }
 
-    public Player getOpponent(Player player) {
-       return player == host ? guest : host;
-    }
-
     public void startGame() {
         // Don't start if there is not enough players
         if (host == null || guest == null || !host.isReady || !guest.isReady) return;
@@ -90,6 +81,43 @@ public class Lobby implements Closeable {
 
         host.isReady = false;
         guest.isReady = false;
+    }
+
+    public boolean setTurnOrder(byte turnOrder) {
+        if (turnOrder > -1 && turnOrder < 3) {
+            this.turnOrder = turnOrder;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean setNextOrder(byte nextOrder) {
+        if (nextOrder > -1 && nextOrder < 3) {
+            this.nextOrder = nextOrder;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean setStartTime(short startTime) {
+        if (startTime > 0) {
+            this.startTime = startTime;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean setIncrement(byte increment) {
+        if (increment >= 0) {
+            this.increment = increment;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean setUnlimitedTime(byte isUnlimited) {
+        this.isUnlimited = (byte) (isUnlimited == 0 ? 0 : 1);
+        return true;
     }
 
     public void updateSettingsAfterGame() {

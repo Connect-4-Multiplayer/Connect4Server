@@ -31,7 +31,7 @@ public class Server {
         InetSocketAddress addr = new InetSocketAddress(PORT);
         serverSock.bind(addr);
         establishClientConnection();
-        for (short i = Short.MIN_VALUE; i < Short.MAX_VALUE; i++) {
+        for (short i = Short.MIN_VALUE + 1; i < Short.MAX_VALUE; i++) {
             availableCodes.add(i);
         }
     }
@@ -54,40 +54,41 @@ public class Server {
     }
 
     private synchronized void readFromClient(AsynchronousSocketChannel client) {
+        System.out.println("accepting read");
         ByteBuffer buffer = ByteBuffer.allocate(INPUT_BYTES);
         client.read(buffer, null, new CompletionHandler<>() {
             @Override
             public void completed(Integer result, Object attachment) {
-                if (result == -1) {
-                    try {
-                        client.close();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-                System.out.println("Recieved");
                 try {
                     buffer.flip();
-                    System.out.println(buffer.remaining());
                     while (buffer.hasRemaining()) {
                         processClientInput(client, buffer);
                     }
-                    // Accept another read
-                    readFromClient(client);
                 }
-                catch (Exception e) {
-                    try {
-                        System.out.println("Closed");
-                        client.close();
-                    } catch (IOException ex) {
-                        throw new RuntimeException(ex);
-                    }
+                catch (Exception ignored) {
+                    System.out.println("Error");
                 }
+                // Accept another read
+                readFromClient(client);
             }
 
             @Override
-            public void failed(Throwable exc, Object attachment) {}
+            public void failed(Throwable exc, Object attachment) {
+                closeConnection(client);
+            }
         });
+    }
+
+    private synchronized void closeConnection(AsynchronousSocketChannel client) {
+        try {
+            Player player = players.get(client);
+            if (player.lobby != null) player.lobby.remove(player);
+            players.remove(client);
+            client.close();
+            System.out.println("Connection closed");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private synchronized void processClientInput(AsynchronousSocketChannel client, ByteBuffer buffer) {
@@ -135,8 +136,10 @@ public class Server {
     }
 
     public synchronized void removeLobby(Lobby lobby) {
+        if (lobby == openLobby) openLobby = null;
         lobbies.remove(lobby.code);
         availableCodes.add(lobby.code);
+        System.out.println(availableCodes.size());
     }
 
 }

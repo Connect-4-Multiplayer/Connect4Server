@@ -14,8 +14,13 @@ public class SetSetting extends Message {
     private static final byte INCREMENT = 3;
     private static final byte IS_UNLIMITED = 4;
 
+    public SetSetting() {
+        type = SET_SETTING;
+    }
+
     @Override
     public void process(Server server, Player player, ByteBuffer buffer) {
+        System.out.println("Got setting");
 
         Lobby lobby = player.lobby;
 
@@ -31,15 +36,23 @@ public class SetSetting extends Message {
 
         // The setting id. Tells which setting to update
         byte settingId = buffer.get();
+
         // The option that the setting is becoming. For example, for next order, 1 would be ALTERNATING
-        // TODO make sure the option is VALID. Invalid setting values could be dangerous!
-        byte settingVal = buffer.get();
-        switch (settingId) {
-            case TURN_ORDER -> lobby.turnOrder = settingVal;
-            case NEXT_ORDER -> lobby.nextOrder = settingVal;
-            case START_TIME -> lobby.startTime = (short) ((settingVal << 8) + buffer.get());
-            case INCREMENT -> lobby.increment = settingVal;
-            case IS_UNLIMITED -> lobby.isUnlimited = settingVal;
-        }
+        byte settingVal0 = buffer.get();
+        System.out.println("Id: " + settingId);
+        System.out.println("Val: " + settingVal0);
+        byte settingVal1 = 0;
+        boolean changed = switch (settingId) {
+            case TURN_ORDER -> lobby.setTurnOrder(settingVal0);
+            case NEXT_ORDER -> lobby.setNextOrder(settingVal0);
+            case START_TIME -> {
+                settingVal1 = (byte) (buffer.get() & 255);
+                yield lobby.setStartTime((short) (((settingVal0 & 255) << 8) + settingVal1));
+            }
+            case INCREMENT -> lobby.setIncrement(settingVal0);
+            case IS_UNLIMITED -> lobby.setUnlimitedTime(settingVal0);
+            default -> false;
+        };
+        if (changed) lobby.guest.client.write(constructMessage(4, settingId, settingVal0, settingVal1).flip());
     }
 }
