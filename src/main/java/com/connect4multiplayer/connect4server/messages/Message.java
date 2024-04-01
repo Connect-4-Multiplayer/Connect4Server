@@ -10,6 +10,7 @@ public abstract class Message {
     static final byte MOVE = 1;
     static final byte PLAYER_INPUT = 2;
     static final byte SET_SETTING = 3;
+    static final byte ENGINE_MESSAGE = 4;
 
     byte type;
 
@@ -19,6 +20,7 @@ public abstract class Message {
             case MOVE -> new MoveMessage();
             case PLAYER_INPUT -> new PlayerInput();
             case SET_SETTING -> new SetSetting();
+            case ENGINE_MESSAGE -> new EngineMessage();
             default -> null;
         };
     }

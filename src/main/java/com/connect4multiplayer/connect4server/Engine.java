@@ -1,14 +1,23 @@
 package com.connect4multiplayer.connect4server;
 
+import com.connect4multiplayer.connect4server.messages.EngineMessage;
+
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * Engine class responsible for calculating the AI's moves
  */
 public class Engine {
 
-    enum Ranking {
+    public int moveNum = 0;
+
+    public Engine() {
+
+    }
+
+    private static enum Ranking {
         BEST,
         GOOD,
         INACCURACY,
@@ -47,6 +56,12 @@ public class Engine {
     static final int[][] nCr = pascalsTriangle(DEPTH);
     static final int[][] comboSums = getComboSums(DEPTH);
     static final int[] posCount = totalPositionCounts(DEPTH);
+
+    static int[] evaluateMoves(long state, int movesMode) {
+        int piece = (movesMode & 1) ^ 1;
+        int[] moves = new int[7];
+        for ()
+    }
 
     /**
      * Finds the minimax value of a position, within the window [alpha, beta]

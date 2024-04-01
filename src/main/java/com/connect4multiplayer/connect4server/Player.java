@@ -38,8 +38,7 @@ public class Player {
     }
 
     public synchronized Optional<Move> playMove() {
-        if (game == null) return Optional.empty();
-        if (game.turn != turn || moves.isEmpty() || game.gameState != Game.NOT_OVER) return Optional.empty();
+        if (game == null || game.turn != turn || moves.isEmpty() || game.gameState != Game.NOT_OVER) return Optional.empty();
         Optional<Move> move = game.playMove(this);
         if (move.isEmpty()) clearMoveQueue();
         return move;

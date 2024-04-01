@@ -28,8 +28,7 @@ public class Game {
      * The current state of the game board
      */
     public long state;
-    public int gameState = NOT_OVER;
-
+    public byte gameState = NOT_OVER;
     public Player host, guest;
 
     public Game(Player host, Player guest) {
