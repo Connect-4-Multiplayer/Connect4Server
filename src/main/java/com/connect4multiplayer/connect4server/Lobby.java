@@ -14,7 +14,7 @@ public class Lobby implements Closeable {
     // Next orders
     private static final byte ALTERNATING = 0;
     private static final byte RANDOM = 1;
-    private static final byte STAY = 2;
+//    private static final byte STAY = 2;
 
     public Server server;
     public Game game;
@@ -63,13 +63,16 @@ public class Lobby implements Closeable {
         }
     }
 
-    public void startGame() {
+    public boolean startGame() {
         // Don't start if there is not enough players
-        if (host == null || guest == null || !host.isReady || !guest.isReady) return;
+        if (host == null || guest == null || !host.isReady || !guest.isReady) return false;
 
         game = new Game(host, guest);
         host.game = game;
         guest.game = game;
+
+        host.moves.clear();
+        guest.moves.clear();
 
         Random rand = new Random();
         switch (turnOrder) {
@@ -81,6 +84,7 @@ public class Lobby implements Closeable {
 
         host.isReady = false;
         guest.isReady = false;
+        return true;
     }
 
     public boolean setTurnOrder(byte turnOrder) {

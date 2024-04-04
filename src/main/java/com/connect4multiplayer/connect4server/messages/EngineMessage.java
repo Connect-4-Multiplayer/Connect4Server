@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 
 public class EngineMessage extends Message {
 
-    private static final byte PREV_MOVE = 0, NEXT_MOVE = 1, SELECT_MOVE;
+    private static final byte PREV_MOVE = 0, NEXT_MOVE = 1, SELECT_MOVE = 2;
 
     public EngineMessage() {
         type = ENGINE_MESSAGE;

@@ -7,19 +7,22 @@ import java.nio.ByteBuffer;
 
 public abstract class Message {
     static final byte LOBBY_JOIN = 0;
-    static final byte MOVE = 1;
+    static final byte MOVE_MESSAGE = 1;
     static final byte PLAYER_INPUT = 2;
     static final byte SET_SETTING = 3;
-    static final byte ENGINE_MESSAGE = 4;
+    static final byte GAME_MESSAGE = 4;
+    static final byte ENGINE_MESSAGE = 5;
 
     byte type;
 
     public static Message of(byte type) {
+        System.out.println("Type: " + type);
         return switch (type) {
             case LOBBY_JOIN -> new LobbyJoin();
-            case MOVE -> new MoveMessage();
+            case MOVE_MESSAGE -> new MoveMessage();
             case PLAYER_INPUT -> new PlayerInput();
             case SET_SETTING -> new SetSetting();
+            case GAME_MESSAGE -> new GameMessage();
             case ENGINE_MESSAGE -> new EngineMessage();
             default -> null;
         };

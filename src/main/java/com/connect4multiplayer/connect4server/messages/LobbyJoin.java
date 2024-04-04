@@ -25,11 +25,8 @@ public class LobbyJoin extends Message {
         final short JOIN_PUBLIC = Short.MAX_VALUE;
         short code = buffer.getShort();
         switch (code) {
-            case CREATE_PRIVATE -> {
-                player.client.write(constructMessage(4, CREATED)
-                        .putShort(server.createPrivateLobby(player)).flip());
-
-            }
+            case CREATE_PRIVATE -> player.client.write(constructMessage(4, CREATED)
+                    .putShort(server.createPrivateLobby(player)).flip());
             case JOIN_PUBLIC -> server.joinPublicMatch(player).ifPresentOrElse(this::sendLobbyInfo,
                     () -> sendOpponentNotFoundReply(player, PUBLIC));
             default -> server.joinPrivateLobby(player, code).ifPresentOrElse(this::sendLobbyInfo,

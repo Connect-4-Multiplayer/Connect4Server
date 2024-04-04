@@ -57,11 +57,11 @@ public class Engine {
     static final int[][] comboSums = getComboSums(DEPTH);
     static final int[] posCount = totalPositionCounts(DEPTH);
 
-    static int[] evaluateMoves(long state, int movesMode) {
-        int piece = (movesMode & 1) ^ 1;
-        int[] moves = new int[7];
-        for ()
-    }
+//    static int[] evaluateMoves(long state, int movesMode) {
+//        int piece = (movesMode & 1) ^ 1;
+//        int[] moves = new int[7];
+//        for ()
+//    }
 
     /**
      * Finds the minimax value of a position, within the window [alpha, beta]

@@ -59,6 +59,7 @@ public class Server {
         client.read(buffer, null, new CompletionHandler<>() {
             @Override
             public void completed(Integer result, Object attachment) {
+                if (result == -1) closeConnection(client);
                 try {
                     buffer.flip();
                     while (buffer.hasRemaining()) {

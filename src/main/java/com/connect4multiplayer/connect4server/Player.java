@@ -1,7 +1,6 @@
 package com.connect4multiplayer.connect4server;
 
 import java.nio.channels.AsynchronousSocketChannel;
-import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.Optional;
 
@@ -14,9 +13,9 @@ public class Player {
     public boolean isReady;
     public boolean isHost;
 
-    final LinkedList<Move> moves = new LinkedList<>();
+    public final LinkedList<Move> moves = new LinkedList<>();
     public byte[] name = new byte[64];
-    int[] moveHeights = new int[7];
+    public int[] moveHeights = new int[7];
 
     public Player(AsynchronousSocketChannel client) {
         this.client = client;
@@ -35,6 +34,13 @@ public class Player {
             System.out.print(", ");
         }
         System.out.println();
+    }
+
+    public synchronized void deletePreMove() {
+        if (!moves.isEmpty()) {
+            Move move = moves.pollLast();
+            moveHeights[move.col()]--;
+        }
     }
 
     public synchronized Optional<Move> playMove() {
