@@ -4,11 +4,12 @@ import com.connect4multiplayer.connect4server.Lobby;
 import com.connect4multiplayer.connect4server.Player;
 import com.connect4multiplayer.connect4server.Server;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 
 public class PlayerInput extends Message {
-    static final byte CHANGE_NAME = 0, TOGGLE_READY = 1, RESIGN = 2, RETURN_TO_LOBBY = 3;
+    static final byte CHANGE_NAME = 0, TOGGLE_READY = 1, RESIGN = 2, RETURN_TO_LOBBY = 3, QUIT = 4;
     static final int MAX_NAME_LENGTH = 64;
 
     public PlayerInput() {
@@ -35,6 +36,17 @@ public class PlayerInput extends Message {
                 guestClient.write(constructMessage(3, TOGGLE_READY, (byte) (player.isHost ? 0 : 1)).flip());
                 if (lobby.startGame()) {
                     new GameMessage().sendStartGame(hostClient, guestClient);
+                }
+            }
+            case QUIT -> {
+                try {
+                    if(player.getOpponent() != null) {
+                        player.getOpponent().client.write(constructMessage(2, QUIT).flip());
+                        System.out.println("sent quit");
+                    }
+                    player.lobby.remove(player);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             }
         }

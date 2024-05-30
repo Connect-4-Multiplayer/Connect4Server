@@ -39,7 +39,7 @@ public class LobbyJoin extends Message {
     }
 
     private void sendLobbyInfo(Lobby lobby) {
-        int SIZE = 74;
+        int SIZE = 76;
         lobby.guest.client.write(constructMessage(SIZE, FOUND, lobby.isPublic)
                 .put(lobby.getSettings())
                 .put(lobby.host.name).flip());

@@ -20,8 +20,6 @@ public class SetSetting extends Message {
 
     @Override
     public void process(Server server, Player player, ByteBuffer buffer) {
-        System.out.println("Got setting");
-
         Lobby lobby = player.lobby;
 
         // Player needs to be in a lobby for this to work
@@ -53,6 +51,10 @@ public class SetSetting extends Message {
             case IS_UNLIMITED -> lobby.setUnlimitedTime(settingVal0);
             default -> false;
         };
-        if (changed) lobby.guest.client.write(constructMessage(4, settingId, settingVal0, settingVal1).flip());
+        if (changed) {
+            ByteBuffer settingsMessage = constructMessage(4, settingId, settingVal0, settingVal1);
+            lobby.host.client.write(settingsMessage.flip());
+            lobby.guest.client.write(settingsMessage.flip());
+        }
     }
 }

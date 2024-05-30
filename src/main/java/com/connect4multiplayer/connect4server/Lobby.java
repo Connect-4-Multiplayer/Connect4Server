@@ -133,7 +133,7 @@ public class Lobby implements Closeable {
     }
 
     public byte[] getSettings() {
-        return new byte[]{isPublic, (byte) turnOrder, (byte) nextOrder,
+        return new byte[]{(byte) (code >> 8), (byte) code, isPublic, (byte) turnOrder, (byte) nextOrder,
                 isUnlimited, increment, (byte) (startTime >> 8), (byte) startTime};
     }
 
