@@ -40,18 +40,18 @@ public class SetSetting extends Message {
         System.out.println("Id: " + settingId);
         System.out.println("Val: " + settingVal0);
         byte settingVal1 = 0;
-        boolean changed = switch (settingId) {
+        boolean settingsChanged = switch (settingId) {
             case TURN_ORDER -> lobby.setTurnOrder(settingVal0);
             case NEXT_ORDER -> lobby.setNextOrder(settingVal0);
             case START_TIME -> {
-                settingVal1 = (byte) (buffer.get() & 255);
-                yield lobby.setStartTime((short) (((settingVal0 & 255) << 8) + settingVal1));
+                settingVal1 = buffer.get();
+                yield lobby.setStartTime((short) (((settingVal0 & 255) << 8) + (settingVal1 & 255)));
             }
             case INCREMENT -> lobby.setIncrement(settingVal0);
             case IS_UNLIMITED -> lobby.setUnlimitedTime(settingVal0);
             default -> false;
         };
-        if (changed) {
+        if (settingsChanged) {
             ByteBuffer settingsMessage = constructMessage(4, settingId, settingVal0, settingVal1);
             lobby.host.client.write(settingsMessage.flip());
             lobby.guest.client.write(settingsMessage.flip());

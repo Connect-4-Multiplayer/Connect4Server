@@ -40,7 +40,6 @@ public class Lobby implements Closeable {
         if (host == null) {
             host = player;
             player.lobby = this;
-            player.isHost = true;
             return true;
         } else if (guest == null) {
             guest = player;
@@ -67,12 +66,12 @@ public class Lobby implements Closeable {
         // Don't start if there is not enough players
         if (host == null || guest == null || !host.isReady || !guest.isReady) return false;
 
+        host.clearMoveQueue();
+        guest.clearMoveQueue();
+
         game = new Game(host, guest);
         host.game = game;
         guest.game = game;
-
-        host.moves.clear();
-        guest.moves.clear();
 
         Random rand = new Random();
         switch (turnOrder) {
@@ -134,7 +133,7 @@ public class Lobby implements Closeable {
 
     public byte[] getSettings() {
         return new byte[]{(byte) (code >> 8), (byte) code, isPublic, (byte) turnOrder, (byte) nextOrder,
-                isUnlimited, increment, (byte) (startTime >> 8), (byte) startTime};
+                increment, isUnlimited, (byte) (startTime >> 8), (byte) startTime};
     }
 
     @Override

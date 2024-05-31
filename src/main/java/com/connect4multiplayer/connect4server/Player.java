@@ -11,7 +11,6 @@ public class Player {
     public Game game;
 
     public boolean isReady;
-    public boolean isHost;
 
     public final LinkedList<Move> moves = new LinkedList<>();
     public byte[] name = new byte[64];
@@ -56,6 +55,6 @@ public class Player {
     }
 
     public Player getOpponent() {
-        return isHost ? lobby.guest : lobby.host;
+        return lobby.host == this ? lobby.guest : lobby.host;
     }
 }

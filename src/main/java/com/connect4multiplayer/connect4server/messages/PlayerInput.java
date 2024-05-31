@@ -31,18 +31,19 @@ public class PlayerInput extends Message {
             case TOGGLE_READY -> {
                 player.isReady = !player.isReady;
                 Lobby lobby = player.lobby;
-                AsynchronousSocketChannel hostClient = lobby.host.client, guestClient = lobby.guest.client;
-                hostClient.write(constructMessage(3, TOGGLE_READY, (byte) (player.isHost ? 0 : 1)).flip());
-                guestClient.write(constructMessage(3, TOGGLE_READY, (byte) (player.isHost ? 0 : 1)).flip());
+                byte playerRole = (byte) (player.lobby.host == player ? 0 : 1);
+                lobby.host.client.write(constructMessage(3, TOGGLE_READY, playerRole).flip());
+                if (lobby.guest != null) {
+                    lobby.guest.client.write(constructMessage(3, TOGGLE_READY, playerRole).flip());
+                }
                 if (lobby.startGame()) {
-                    new GameMessage().sendStartGame(hostClient, guestClient);
+                    new GameMessage().sendStartGame(lobby.host.client, lobby.guest.client);
                 }
             }
             case QUIT -> {
                 try {
                     if(player.getOpponent() != null) {
                         player.getOpponent().client.write(constructMessage(2, QUIT).flip());
-                        System.out.println("sent quit");
                     }
                     player.lobby.remove(player);
                 } catch (IOException e) {
