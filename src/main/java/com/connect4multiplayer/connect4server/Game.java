@@ -71,7 +71,7 @@ public class Game {
      * Checks if the game is over
      * @return Integer representing the result of the game
      */
-    public byte getGameState() {
+    private byte getGameState() {
         if (isWin(state, turn ^ 1)) return WIN;
         if (movesMade == SPOTS) return DRAW;
         return NOT_OVER;

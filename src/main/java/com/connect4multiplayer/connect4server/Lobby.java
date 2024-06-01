@@ -14,7 +14,8 @@ public class Lobby implements Closeable {
     // Next orders
     private static final byte ALTERNATING = 0;
     private static final byte RANDOM = 1;
-//    private static final byte STAY = 2;
+
+    private static final byte TURN_LOWER_BOUND = -1, TURN_UPPER_BOUND = 3;
 
     public Server server;
     public Game game;
@@ -80,6 +81,7 @@ public class Lobby implements Closeable {
             case INIT_RANDOM -> host.turn = rand.nextInt(2);
         }
         guest.turn = host.turn ^ 1;
+        turnOrder = guest.turn;
 
         host.isReady = false;
         guest.isReady = false;
@@ -87,7 +89,7 @@ public class Lobby implements Closeable {
     }
 
     public boolean setTurnOrder(byte turnOrder) {
-        if (turnOrder > -1 && turnOrder < 3) {
+        if (turnOrder > TURN_LOWER_BOUND && turnOrder < TURN_UPPER_BOUND) {
             this.turnOrder = turnOrder;
             return true;
         }
@@ -95,7 +97,7 @@ public class Lobby implements Closeable {
     }
 
     public boolean setNextOrder(byte nextOrder) {
-        if (nextOrder > -1 && nextOrder < 3) {
+        if (nextOrder > TURN_LOWER_BOUND && nextOrder < TURN_UPPER_BOUND) {
             this.nextOrder = nextOrder;
             return true;
         }
@@ -124,11 +126,11 @@ public class Lobby implements Closeable {
     }
 
     public void updateSettingsAfterGame() {
-        Random rand = new Random();
         switch (nextOrder) {
             case ALTERNATING -> turnOrder ^= 1;
-            case RANDOM -> turnOrder = rand.nextInt(2) ;
+            case RANDOM -> turnOrder = new Random().nextInt(2);
         }
+        System.out.println("TUrn order" + turnOrder);
     }
 
     public byte[] getSettings() {
@@ -137,7 +139,7 @@ public class Lobby implements Closeable {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         server.removeLobby(this);
     }
 }

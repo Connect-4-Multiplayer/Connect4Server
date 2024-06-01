@@ -17,8 +17,9 @@ public class GameMessage extends Message {
 
     public void sendStartGame(Lobby lobby) {
         final int START_MESSAGE_SIZE = 3;
-        lobby.host.client.write(constructMessage(START_MESSAGE_SIZE, START, (byte) lobby.host.turn).flip());
-        lobby.guest.client.write(constructMessage(START_MESSAGE_SIZE, START, (byte) lobby.guest.turn).flip());
+        ByteBuffer message = constructMessage(START_MESSAGE_SIZE, START, (byte) lobby.host.turn);
+        lobby.host.client.write(message.flip());
+        lobby.guest.client.write(message.flip());
     }
 
     @Override

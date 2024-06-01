@@ -6,7 +6,9 @@ import com.connect4multiplayer.connect4server.Player;
 import com.connect4multiplayer.connect4server.Server;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
+
+import static com.connect4multiplayer.connect4server.Game.NOT_OVER;
+import static com.connect4multiplayer.connect4server.messages.SetSetting.TURN_ORDER;
 
 public class MoveMessage extends Message {
 
@@ -33,7 +35,11 @@ public class MoveMessage extends Message {
     private void handleMove(Player player, Player opponent) {
         player.playMove().ifPresentOrElse(move -> {
             sendMoveToClients(move, player.game);
-            handleMove(opponent, player);
+            if (player.game.gameState != NOT_OVER) {
+                player.lobby.updateSettingsAfterGame();
+                new SetSetting().sendSetting(player.lobby, TURN_ORDER, (byte) player.lobby.turnOrder, (byte) 0);
+            }
+            else handleMove(opponent, player);
         }, () -> {
             sendPreMoves(player);
             sendPreMoves(opponent);

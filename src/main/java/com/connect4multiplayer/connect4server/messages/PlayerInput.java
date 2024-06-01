@@ -6,7 +6,6 @@ import com.connect4multiplayer.connect4server.Server;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousSocketChannel;
 
 public class PlayerInput extends Message {
     static final byte CHANGE_NAME = 0, TOGGLE_READY = 1, QUIT = 2;
@@ -44,6 +43,7 @@ public class PlayerInput extends Message {
                 try {
                     if(player.getOpponent() != null) {
                         player.getOpponent().client.write(constructMessage(2, QUIT).flip());
+
                     }
                     player.lobby.remove(player);
                 } catch (IOException e) {
