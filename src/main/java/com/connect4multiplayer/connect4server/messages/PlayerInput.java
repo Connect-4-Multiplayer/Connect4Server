@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 
 public class PlayerInput extends Message {
-    static final byte CHANGE_NAME = 0, TOGGLE_READY = 1, RESIGN = 2, RETURN_TO_LOBBY = 3, QUIT = 4;
+    static final byte CHANGE_NAME = 0, TOGGLE_READY = 1, QUIT = 2;
     static final int MAX_NAME_LENGTH = 64;
 
     public PlayerInput() {
@@ -37,7 +37,7 @@ public class PlayerInput extends Message {
                     lobby.guest.client.write(constructMessage(3, TOGGLE_READY, playerRole).flip());
                 }
                 if (lobby.startGame()) {
-                    new GameMessage().sendStartGame(lobby.host.client, lobby.guest.client);
+                    new GameMessage().sendStartGame(lobby);
                 }
             }
             case QUIT -> {

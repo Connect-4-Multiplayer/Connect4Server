@@ -24,7 +24,6 @@ public class MoveMessage extends Message {
                 handleMove(player, player.getOpponent());
             }
             case DELETE_PRE_MOVE -> {
-                System.out.println("Deleted");
                 player.deletePreMove();
                 sendPreMoves(player);
             }

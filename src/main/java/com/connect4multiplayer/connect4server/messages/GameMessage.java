@@ -1,5 +1,6 @@
 package com.connect4multiplayer.connect4server.messages;
 
+import com.connect4multiplayer.connect4server.Lobby;
 import com.connect4multiplayer.connect4server.Player;
 import com.connect4multiplayer.connect4server.Server;
 
@@ -14,9 +15,10 @@ public class GameMessage extends Message {
         type = GAME_MESSAGE;
     }
 
-    public void sendStartGame(AsynchronousSocketChannel hostClient, AsynchronousSocketChannel guestClient) {
-        hostClient.write(constructMessage(2, START).flip());
-        guestClient.write(constructMessage(2, START).flip());
+    public void sendStartGame(Lobby lobby) {
+        final int START_MESSAGE_SIZE = 3;
+        lobby.host.client.write(constructMessage(START_MESSAGE_SIZE, START, (byte) lobby.host.turn).flip());
+        lobby.guest.client.write(constructMessage(START_MESSAGE_SIZE, START, (byte) lobby.guest.turn).flip());
     }
 
     @Override

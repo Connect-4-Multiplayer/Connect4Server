@@ -26,13 +26,6 @@ public class Player {
             moveHeights[col]++;
             moves.add(move);
         });
-        for (Move move : moves) {
-            System.out.print("Player " + move.player());
-            System.out.print(" Col " + move.col());
-            System.out.print(" Height " + move.height());
-            System.out.print(", ");
-        }
-        System.out.println();
     }
 
     public synchronized void deletePreMove() {

@@ -11,7 +11,7 @@ public class Game {
     /**
      * Number of spots on the board
      */
-    static final int SPOTS = 42;
+    static final int SPOTS = 42, COLUMN_HEIGHT = 6;
     /**
      * Represents the result of the game
      */
@@ -38,7 +38,7 @@ public class Game {
 
     public synchronized Optional<Move> validateMove(byte col, Player player) {
         int height = getHeight(col) + player.moveHeights[col];
-        if (height >= 6 || gameState != NOT_OVER) return Optional.empty();
+        if (height >= COLUMN_HEIGHT || gameState != NOT_OVER || player.moves.size() == (SPOTS - movesMade >>> 1)) return Optional.empty();
         // We allow moves to be sent here because of pre moves
         return Optional.of(new Move(col, (byte) height, (byte) player.turn));
     }
